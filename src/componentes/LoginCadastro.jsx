@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 function LoginCadastro() {
 
-    const [isLogin, setIsLogin] = useState(true);
+    const [isLogin, setIsLogin] = useState(false);
 
     return (
         <div>
