@@ -4,15 +4,21 @@
   "main": "index.js",
   "scripts": {
     "start": "react-scripts start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "react-scripts build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.6",
     "express": "^4.21.2",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.2.0",
     "react-scripts": "^5.0.1"
   },
   "browserslist": {
