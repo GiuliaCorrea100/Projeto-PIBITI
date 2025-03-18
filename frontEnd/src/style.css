@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
+* { 
+    box-sizing: border-box; 
+}
+
+body {
+    font-family: "Nunito", serif;
+}
+
+/*LoginCadastro*/
+.center-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f5f5f7;
+}
+
+.form-container {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.form-container input {
+    width: 100%;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.form-container button {
+    width: 100%;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border: none;
+    border-radius: 8px;
+    background-color: #0d58a8;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.form-container button:hover {
+    background-color: #0063cc;
+}
+
+.form-container a {
+    color: #0d58a8;
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.form-container a:hover {
+    text-decoration: underline;
+}
+
+.form-container p {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/*erro no email/senha*/
+.input-erro {
+    border: 1px solid red;
+}
+
+.erro {
+    color: red;
+    font-size: 0.875em;
+    margin-top: 0.25em;
+}
