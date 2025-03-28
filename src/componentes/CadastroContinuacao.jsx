@@ -1,26 +1,33 @@
 import React, { useState } from "react";
+import "../style.css";
+import { useNavigate } from "react-router-dom";
 
 function CadastroContinuacao() {
 
     const [aceitaProximas, setAceitaProximas] = useState(false);
+
+    const navigate = useNavigate();
+    const handleVoltarParaLogin = () => {
+        navigate("/");
+    }
+    
     return (
         <div className="center-container">
             <div className="form-container">
                 <h2>Complete seu Cadastro</h2>
 
-                <div className="profile-picture-container">
-                    <div className="profile-picture">
-                        <span>+</span>
-                        <input type="file" accept="image/*" style={{ display: "none" }} />
-                    </div>
+                <div className="input-wrapper">
+                <input 
+                    type="text" 
+                    placeholder="Cargo" 
+                />
                 </div>
 
-                <input type="text" placeholder="Cargo" />
-
-                <div className="institution-container">
-                    <input type="text" placeholder="Instituição Atual" />
-                    <div className="arrow">→</div>
-                    <input type="text" placeholder="Instituição Destino" />
+                <div className="input-wrapper">
+                    <input 
+                        type="text" 
+                        placeholder="Instituição Atual"
+                    />
                 </div>
 
                 <div className="checkbox-container">
@@ -33,8 +40,12 @@ function CadastroContinuacao() {
                         Aceito receber sugestões de instituições próximas
                     </label>
                 </div>
-
                 <button>Finalizar Cadastro</button>
+                <button 
+                    onClick={handleVoltarParaLogin} 
+                    className="voltar-login">
+                    Voltar para tela de login
+                </button>
             </div>
         </div>
     );
