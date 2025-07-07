@@ -1,84 +1,305 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
 
-* { 
-    box-sizing: border-box; 
+/* --- Variáveis CSS --- */
+:root {
+    /* Cores */
+    --primary-color: #005f73;
+    --primary-color-hover: #004c5c;
+    --background-color-light: #f5f5f7;
+    --card-background-color: white;
+    --border-color-default: #ddd;
+    --text-color-medium: #666;
+    --error-color: red;
+
+    /* Espaçamento */
+    --spacing-xs: 0.25rem;  /* 4px */
+    --spacing-sm: 0.5rem;   /* 8px */
+    --spacing-md: 0.75rem;  /* 12px */
+    --spacing-lg: 1rem;     /* 16px */
+    --spacing-xl: 2rem;     /* 32px */
+
+    /* Fontes */
+    --font-family-base: "Nunito", serif;
+    --font-size-base: 1rem;        /* 16px */
+    --font-size-small: 0.875rem;   /* 14px */
+
+    /* Bordas e Sombras */
+    --border-radius-sm: 8px;
+    --border-radius-lg: 12px;
+    --box-shadow-default: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Estilos Base --- */
+* {
+    box-sizing: border-box;
 }
 
 body {
-    font-family: "Nunito", serif;
+    font-family: var(--font-family-base);
+    margin: 0;
+    line-height: 1.5;
 }
 
-/*LoginCadastro*/
-.center-container {
+/* --- Seção: Tela de Menu --- */
+.menu-container {
+    font-family: sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.menu-header-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* --- Botão do Usuário --- */
+.user-button-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.user-button {
+    background-color: transparent;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+    color: white;
+    border-radius: var(--border-radius-sm);
+    transition: background-color 0.3s ease;
+}
+
+.user-button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.user-button:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}
+
+.user-icon-svg {
+    width: 40px;
+    height: 40px;
+}
+
+/* --- Modal do Perfil --- */
+.profile-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background-color: #f5f5f7;
+    z-index: 1000;
+}
+
+.profile-modal-content {
+    background-color: white;
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    min-width: 300px;
+    text-align: center;
+    box-shadow: var(--box-shadow-default);
+}
+
+.profile-modal-close-button {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    transition: background-color 0.3s ease;
+}
+
+.profile-modal-close-button:hover {
+    background-color: var(--primary-color-hover);
+}
+
+/* --- Conteúdo Principal --- */
+.menu-main-content {
+    flex: 1;
+    padding: var(--spacing-xl);
+    text-align: center;
+    background-color: var(--background-color-light);
+}
+
+.menu-main-content h2 {
+    margin-bottom: var(--spacing-xl);
+}
+
+/* --- Boxes Centrais --- */
+.central-boxes {
+    display: flex;
+    gap: var(--spacing-xl);
+    margin-top: var(--spacing-xl);
+    justify-content: center;
+}
+
+.box {
+    background-color: var(--card-background-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    width: 300px;
+    min-height: 300px;
+    box-shadow: var(--box-shadow-default);
+}
+
+.servidor-lista {
+    margin-top: var(--spacing-md);
+}
+
+.servidor-item {
+    padding: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color-default);
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-small);
+}
+
+.local {
+    color: blue;
+    margin: 0 var(--spacing-xs);
+}
+
+.perfil-button {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: #000;
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.perfil-button:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* --- Estilos do Login/Cadastro --- */
+.center-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--background-color-light);
+  padding: var(--spacing-xl);
 }
 
 .form-container {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
+  background-color: var(--card-background-color);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-default);
+  width: 100%;
+  max-width: 400px;
 }
 
-.form-container input {
-    width: 100%;
-    padding: 0.75rem;
-    margin: 0.5rem 0;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
+.form-container h2 {
+  color: var(--primary-color);
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
 }
 
-.form-container button {
-    width: 100%;
-    padding: 0.75rem;
-    margin: 0.5rem 0;
-    border: none;
-    border-radius: 8px;
-    background-color: #0d58a8;
-    color: white;
-    font-size: 1rem;
-    cursor: pointer;
+.input-wrapper {
+  margin-bottom: var(--spacing-lg);
 }
 
-.form-container button:hover {
-    background-color: #0063cc;
-}
-
-.form-container a {
-    color: #0d58a8;
-    text-decoration: none;
-    font-size: 0.875rem;
-}
-
-.form-container a:hover {
-    text-decoration: underline;
-}
-
-.form-container p {
-    margin-top: 1rem;
-    font-size: 0.875rem;
-    color: #666;
-} 
-
-.input-wrapper input:focus {
-    outline: none;
-    border-color: #0d6efd;
+.input-wrapper input {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color-default);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family-base);
 }
 
 .input-erro {
-    border: 1px solid red;
+  border-color: var(--error-color) !important;
 }
 
 .erro {
-    color: red;
-    font-size: 0.875em;
-    margin-top: 0.25em;
+  color: var(--error-color);
+  font-size: var(--font-size-small);
+  margin-top: var(--spacing-xs);
+}
+
+.erro-geral {
+  color: var(--error-color);
+  text-align: center;
+  margin: var(--spacing-md) 0;
+}
+
+button[type="button"] {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  width: 100%;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  transition: background-color 0.3s ease;
+  margin-bottom: var(--spacing-md);
+}
+
+button[type="button"]:hover {
+  background-color: var(--primary-color-hover);
+}
+
+button[type="button"]:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.link-like {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: var(--font-size-small);
+  display: inline;
+  width: auto;
+}
+
+.form-container p {
+  text-align: center;
+  margin-top: var(--spacing-lg);
+  color: var(--text-color-medium);
+}
+
+.form-container p button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-left: var(--spacing-xs);
+  width: auto;
+  display: inline;
 }
