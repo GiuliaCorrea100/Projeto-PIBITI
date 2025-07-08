@@ -63,13 +63,6 @@ body {
     font-weight: bold;
 }
 
-/* --- Botão do Usuário --- */
-.user-button-container {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-}
-
 .user-button {
     background-color: transparent;
     border: none;

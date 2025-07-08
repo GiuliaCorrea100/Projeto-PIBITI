@@ -12,6 +12,8 @@ interface UserData {
   email: string;
   senha?: string;
   cargo?: string;
+  instituicaoAtual?: number;
+  aceitaPerto?: boolean;
   createdAt?: string;
 }
 
@@ -41,7 +43,12 @@ const TelaMenu: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string>(DEFAULT_AVATAR);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
-  // Função para lidar com erro de carregamento da imagem
+  // Estados para o modal de informações
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [cargo, setCargo] = useState('');
+  const [instituicaoAtual, setInstituicaoAtual] = useState<number | ''>('');
+  const [aceitaPerto, setAceitaPerto] = useState(false);
+
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = DEFAULT_AVATAR;
   };
@@ -63,7 +70,6 @@ const TelaMenu: React.FC = () => {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        // Atualiza a imagem no estado para refletir na UI imediatamente
         setProfileImage(reader.result as string);
       };
       reader.readAsDataURL(file);
@@ -80,15 +86,25 @@ const TelaMenu: React.FC = () => {
         return;
       }
       
-      const response = await axios.get<UserData>('http://localhost:3000/autorizacoes/me2', {
+      const response = await axios.get<UserData>('http://localhost:3000/autorizacoes/me', {
         headers: { Authorization: `Bearer ${token}` },
       });
       
       setUserName(response.data.nome);
       setUserData(response.data);
       setOriginalData({ ...response.data });
-      // Define a URL da foto de perfil com timestamp para evitar cache
-      setProfileImage(`http://localhost:3000/usuarios/${response.data.id}/foto?${new Date().getTime()}`);
+      
+      const fotoResponse = await axios.get(`http://localhost:3000/usuarios/${response.data.id}/foto`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob' // Isso é importante para imagens
+      });
+      
+      if (fotoResponse.data.size > 0) {
+        const imageUrl = URL.createObjectURL(fotoResponse.data);
+        setProfileImage(imageUrl);
+      } else {
+        setProfileImage(DEFAULT_AVATAR);
+      }
 
     } catch (error) {
       console.error('Erro ao buscar dados do usuário:', error);
@@ -109,7 +125,6 @@ const TelaMenu: React.FC = () => {
       setUserName(user.nome);
       setUserData(user);
       setOriginalData({ ...user });
-      // Define a URL da foto de perfil
       setProfileImage(`http://localhost:3000/usuarios/${user.id}/foto?${new Date().getTime()}`);
       setLoading(false);
     } else {
@@ -121,7 +136,6 @@ const TelaMenu: React.FC = () => {
     setIsProfileModalOpen(!isProfileModalOpen);
     if (!isProfileModalOpen && userData) {
       setOriginalData({...userData});
-      // Atualiza a foto ao abrir o modal
       setProfileImage(`http://localhost:3000/usuarios/${userData.id}/foto?${new Date().getTime()}`);
     }
   };
@@ -133,65 +147,149 @@ const TelaMenu: React.FC = () => {
     }
   };
 
-  const handleSave = async () => {
-      if (!userData?.id || !originalData) return;
-      
-      const updateData: any = {};
-      
-      if (userData.nome && userData.nome !== originalData.nome) {
-        updateData.nome = userData.nome;
-      }
-      
-      if (userData.email && userData.email !== originalData.email) {
-        updateData.email = userData.email;
-      }
-      
-      if (userData.senha && userData.senha.trim() !== '') {
-        updateData.senha = userData.senha;
-      }
-
-      if (Object.keys(updateData).length === 0) {
-        setAlertMessage('Nenhuma alteração foi feita');
+  const handleSaveProfile = async () => {
+    if (!userData?.id || !originalData) return;
+    
+    const updateData: Partial<UserData> = {};
+    
+    // Verifica e inclui nome se foi alterado
+    if (userData.nome !== originalData.nome) {
+      updateData.nome = userData.nome;
+    }
+    
+    // Verifica e inclui email se foi alterado
+    if (userData.email !== originalData.email) {
+      updateData.email = userData.email;
+    }
+    
+    // Verifica e inclui senha se foi preenchida
+    if (userData.senha && userData.senha.trim() !== '') {
+      if (userData.senha.length < 8) {
+        setAlertMessage('A senha deve conter pelo menos 8 caracteres');
         setTimeout(() => setAlertMessage(null), 1500);
         return;
       }
+      updateData.senha = userData.senha;
+    }
 
-      try {
-        const response = await axios.put(
-          `http://localhost:3000/usuarios/${userData.id}`,
-          updateData,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        
-        if (response.status === 200) {
-          if (updateData.nome) {
-              setUserName(updateData.nome);
-          }
-          setAlertMessage('Alterações salvas com sucesso!');
-          setOriginalData({ ...userData, senha: '' });
-          setUserData(prev => prev ? {...prev, senha: ''} : null);
+    if (Object.keys(updateData).length === 0) {
+      setAlertMessage('Nenhuma alteração foi feita');
+      setTimeout(() => setAlertMessage(null), 1500);
+      return;
+    }
 
-          setTimeout(() => {
-            setAlertMessage(null);
-            closeProfileModal();
-          }, 1500);
+    try {
+      const response = await axios.put(
+        `http://localhost:3000/usuarios/${userData.id}`,
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
         }
-      } catch (error: any) {
-        console.error('Erro ao salvar alterações:', error.response || error.message);
-        setAlertMessage(`Erro ao salvar: ${error.response?.data?.message || error.message}`);
+      );
+      
+      if (response.status === 200) {
+        // Atualiza os dados do usuário
+        const updatedUser = await axios.get<UserData>(`http://localhost:3000/autorizacoes/me`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+        
+        // Atualiza TODOS os estados relevantes
+        setUserName(updatedUser.data.nome);
+        setUserData(updatedUser.data);
+        setOriginalData(updatedUser.data);
+        
+        // Atualiza a imagem do perfil para forçar recarregamento
+        setProfileImage(`http://localhost:3000/usuarios/${updatedUser.data.id}/foto?${new Date().getTime()}`);
+        
+        setAlertMessage('Alterações salvas com sucesso!');
+        
+        setTimeout(() => {
+          setAlertMessage(null);
+          closeProfileModal();
+        }, 1500);
       }
+    } catch (error: any) {
+      console.error('Erro ao salvar alterações:', error);
+      let errorMessage = 'Erro ao salvar alterações';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message.includes('500')) {
+        errorMessage = 'O email já está em uso por outro usuário';
+      }
+      
+      setAlertMessage(errorMessage);
+    }
+  };
+
+  const handleSaveInfo = async () => {
+    if (!userData?.id) return;
+
+    try {
+      const response = await axios.put(
+        `http://localhost:3000/usuarios/${userData.id}`,
+        {
+          cargo,
+          instituicaoAtual: instituicaoAtual === '' ? null : Number(instituicaoAtual),
+          aceitaPerto: Boolean(aceitaPerto)
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (response.status === 200) {
+        const updatedUser = await axios.get<UserData>(`http://localhost:3000/autorizacoes/me`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+
+        setUserName(updatedUser.data.nome);
+        setUserData(updatedUser.data);
+        setOriginalData({ ...updatedUser.data });
+
+        setAlertMessage('Informações salvas com sucesso!');
+        setUserData(prev => prev ? {...prev, cargo, instituicaoAtual: Number(instituicaoAtual), aceitaPerto } : null);
+        setTimeout(() => {
+          setAlertMessage(null);
+          closeInfoModal();
+        }, 1500);
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar informações:', error.response || error.message);
+      setAlertMessage(`Erro ao salvar: ${error.response?.data?.message || error.message}`);
+    }
+    await fetchUserData();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  };
+
+  const openInfoModal = () => {
+    if (userData) {
+      setCargo(userData.cargo || '');
+      setInstituicaoAtual(userData.instituicaoAtual || '');
+      setAceitaPerto(userData.aceitaPerto || false);
+    }
+    setIsInfoModalOpen(true);
+  };
+
+  const closeInfoModal = () => {
+    setIsInfoModalOpen(false);
   };
 
   return (
     <div className="menu-container">
       <header className="menu-header">
-        <div className="user-button-container">
-          <button className="user-button" onClick={toggleProfileModal}>
+        <div className='left-header'>
+            <button className="user-button" onClick={toggleProfileModal}>
             <img 
               src={profileImage} 
               alt="Perfil" 
@@ -199,6 +297,17 @@ const TelaMenu: React.FC = () => {
               onError={handleImageError}
             />
             <span>{loading ? 'Carregando...' : userName}</span>
+          </button>
+        </div>
+        <div className='right-header'>
+          <button className="user-button">
+            MENSAGENS
+          </button>
+          <button className="user-button" onClick={openInfoModal}>
+            INFORMAÇÕES
+          </button>
+          <button className='user-button' onClick={handleLogout}>
+            SAIR
           </button>
         </div>
       </header>
@@ -248,8 +357,11 @@ const TelaMenu: React.FC = () => {
                 <input 
                   type="email" 
                   value={userData?.email || ''} 
-                  onChange={(e) =>
-                    setUserData((prev) => prev ? { ...prev, email: e.target.value } : null)
+                  onChange={(e) => {
+                      if (userData) {
+                        setUserData({ ...userData, email: e.target.value });
+                      }
+                    }
                   }
                 />
               </div>
@@ -269,7 +381,7 @@ const TelaMenu: React.FC = () => {
             <div className="profile-actions">
               <div className="right-buttons">
                 <button className="cancel-button" onClick={closeProfileModal}>Cancelar</button>
-                <button className="save-button" onClick={handleSave}>Salvar</button>
+                <button className="save-button" onClick={handleSaveProfile}>Salvar</button>
               </div>
             </div>
           </div>
@@ -284,6 +396,59 @@ const TelaMenu: React.FC = () => {
         </div>
       )}
 
+      {isInfoModalOpen && (
+        <div className="profile-modal-overlay" onClick={closeInfoModal}>
+          <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-fields">
+              <h2>Informações do Servidor</h2>
+
+              <div className="field-group">
+                <label>Cargo</label>
+                <input 
+                  type="text" 
+                  value={cargo} 
+                  onChange={(e) => setCargo(e.target.value)} 
+                />
+              </div>
+
+              <div className="field-group">
+                <label>Instituição Atual</label>
+                <input 
+                  type="text" 
+                  value={instituicaoAtual} 
+                  onChange={(e) => setInstituicaoAtual(e.target.value === '' ? '' : Number(e.target.value))} 
+                />
+              </div>
+
+              <div className="field-group checkbox-group">
+                <label className='checkbox-label'>
+                  <input 
+                    type="checkbox" 
+                    checked={aceitaPerto} 
+                    onChange={(e) => setAceitaPerto(e.target.checked)} 
+                  />
+                  <span className="checkbox-text">Aceita instituições perto?</span>
+                </label>
+              </div>
+
+              <div className="profile-actions">
+                <div className="right-buttons">
+                  <button className="cancel-button" onClick={closeInfoModal}>Fechar</button>
+                  <button className="save-button" onClick={handleSaveInfo}>Salvar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {alertMessage && (
+            <div className="custom-alert-overlay">
+              <div className="custom-alert-box">
+                <p>{alertMessage}</p>
+                <button onClick={() => setAlertMessage(null)}>OK</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

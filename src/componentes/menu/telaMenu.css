@@ -1,3 +1,54 @@
+/* --- Cabeçalho --- */
+.menu-header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.left-header {
+  display: flex;
+  align-items: center;
+}
+
+.right-header {
+  display: flex;
+  margin-left: auto;
+}
+
+/* --- Botão genérico de usuário (e também INFORMAÇÕES) --- */
+.user-button,
+.info-button {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.user-button:hover,
+.info-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* --- Avatar no cabeçalho --- */
+.header-profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+  background-color: #e5e7eb;
+}
+
+/* --- Modal de perfil --- */
 .profile-modal-overlay {
   position: fixed;
   inset: 0;
@@ -63,20 +114,12 @@
   align-items: center;
 }
 
-.delete-button {
-  background: #fee2e2;
-  color: #b91c1c;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
 .cancel-button,
-.save-button {
+.save-button,
+.delete-button {
   padding: 8px 14px;
-  border-radius: 6px;
   border: none;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
 }
@@ -91,6 +134,12 @@
   color: white;
 }
 
+.delete-button {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* --- Avatar editável --- */
 .profile-avatar-wrapper {
   position: relative;
   width: 64px;
@@ -129,10 +178,11 @@
   justify-content: center;
   border-radius: 50%;
   border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   z-index: 2;
 }
 
+/* --- Alertas personalizados --- */
 .custom-alert-overlay {
   position: fixed;
   inset: 0;
@@ -167,23 +217,28 @@
   cursor: pointer;
 }
 
-/* Estilos para a foto de perfil no cabeçalho */
-.header-profile-avatar {
-  width: 40px;           /* Largura da imagem */
-  height: 40px;          /* Altura da imagem */
-  border-radius: 50%;    /* Transforma a imagem em um círculo */
-  object-fit: cover;     /* Garante que a imagem preencha o espaço sem distorcer */
-  margin-right: 12px;    /* Cria um espaço entre a foto e o nome do usuário */
-  background-color: #e5e7eb; /* Cor de fundo caso a imagem não carregue */
-}
-
-/* Ajuste no botão para alinhar a imagem e o texto corretamente */
-.user-button {
+/* --- Estilo para checkbox organizado --- */
+.checkbox-group {
   display: flex;
   align-items: center;
-  background: none;
-  border: none;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #444;
   cursor: pointer;
-  color: white; /* Ou a cor que preferir para o texto */
-  font-size: 16px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color); 
+  cursor: pointer;
+}
+
+.checkbox-text {
+  user-select: none;
 }
