@@ -96,7 +96,7 @@ const TelaMenu: React.FC = () => {
       
       const fotoResponse = await axios.get(`http://localhost:3000/usuarios/${response.data.id}/foto`, {
         headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob' // Isso é importante para imagens
+        responseType: 'blob'
       });
       
       if (fotoResponse.data.size > 0) {
@@ -234,7 +234,7 @@ const TelaMenu: React.FC = () => {
         {
           cargo,
           instituicaoAtual: instituicaoAtual === '' ? null : Number(instituicaoAtual),
-          aceitaPerto: Boolean(aceitaPerto)
+          aceitaPerto
         },
         {
           headers: {
@@ -272,13 +272,25 @@ const TelaMenu: React.FC = () => {
     window.location.href = '/';
   };
 
-  const openInfoModal = () => {
-    if (userData) {
-      setCargo(userData.cargo || '');
-      setInstituicaoAtual(userData.instituicaoAtual || '');
-      setAceitaPerto(userData.aceitaPerto || false);
+  const openInfoModal = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      // Busca os dados atualizados do usuário
+      const response = await axios.get<UserData>('http://localhost:3000/autorizacoes/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      // Preenche os estados com os dados do banco
+      setCargo(response.data.cargo || '');
+      setInstituicaoAtual(response.data.instituicaoAtual || '');
+      setAceitaPerto(response.data.aceitaPerto || false);
+      
+      setIsInfoModalOpen(true);
+    } catch (error) {
+      console.error('Erro ao cargar informações do usuário:', error);
     }
-    setIsInfoModalOpen(true);
   };
 
   const closeInfoModal = () => {
