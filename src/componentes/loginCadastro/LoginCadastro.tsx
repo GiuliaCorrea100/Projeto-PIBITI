@@ -104,6 +104,10 @@ function LoginCadastro() {
                     senha: formData.senha,
                 });
 
+                if (response.data && response.data.access_token) {
+                    localStorage.setItem('token', response.data.access_token);
+                }
+
                 console.log("Login realizado:", response.data);
 
                 navigate("/TelaPrincipal", {
