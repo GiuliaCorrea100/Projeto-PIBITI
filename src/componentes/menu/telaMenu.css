@@ -166,3 +166,24 @@
   border-radius: 6px;
   cursor: pointer;
 }
+
+/* Estilos para a foto de perfil no cabeçalho */
+.header-profile-avatar {
+  width: 40px;           /* Largura da imagem */
+  height: 40px;          /* Altura da imagem */
+  border-radius: 50%;    /* Transforma a imagem em um círculo */
+  object-fit: cover;     /* Garante que a imagem preencha o espaço sem distorcer */
+  margin-right: 12px;    /* Cria um espaço entre a foto e o nome do usuário */
+  background-color: #e5e7eb; /* Cor de fundo caso a imagem não carregue */
+}
+
+/* Ajuste no botão para alinhar a imagem e o texto corretamente */
+.user-button {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white; /* Ou a cor que preferir para o texto */
+  font-size: 16px;
+}

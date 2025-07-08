@@ -3,6 +3,9 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './telaMenu.css';
 
+// URL para uma imagem de perfil padrão
+const DEFAULT_AVATAR = 'https://camo.githubusercontent.com/b617b075456f03a893a7726a2636279e8557b3ac1c0f48f4b8a6e87a55e2e8e3/68747470733a2f2f63646e2d69636f6e732d706e672e666c617469636f6e2e636f6d2f3531322f363539362f363539363435362e706e67';
+
 interface UserData {
   id: number;
   nome: string;
@@ -35,8 +38,13 @@ const TelaMenu: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [originalData, setOriginalData] = useState<UserData | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string>(DEFAULT_AVATAR);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
+  // Função para lidar com erro de carregamento da imagem
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = DEFAULT_AVATAR;
+  };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -55,7 +63,8 @@ const TelaMenu: React.FC = () => {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewImage(reader.result as string);
+        // Atualiza a imagem no estado para refletir na UI imediatamente
+        setProfileImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     } catch (error) {
@@ -63,33 +72,24 @@ const TelaMenu: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (location.state?.userName) {
-      setUserName(location.state.userName);
-      const user = {
-        id: location.state.userId,
-        nome: location.state.userName,
-        email: location.state.userEmail,
-        senha: location.state.userPassword,
-      };
-      setUserData(user);
-      setOriginalData({...user});
-      setLoading(false);
-    } else {
-      fetchUserData();
-    }
-  }, [location]);
-
   const fetchUserData = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      
       const response = await axios.get<UserData>('http://localhost:3000/autorizacoes/me2', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
+      
       setUserName(response.data.nome);
       setUserData(response.data);
-      setOriginalData({...response.data});
+      setOriginalData({ ...response.data });
+      // Define a URL da foto de perfil com timestamp para evitar cache
+      setProfileImage(`http://localhost:3000/usuarios/${response.data.id}/foto?${new Date().getTime()}`);
+
     } catch (error) {
       console.error('Erro ao buscar dados do usuário:', error);
       setUserName('usuário');
@@ -98,10 +98,31 @@ const TelaMenu: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (location.state?.userId) {
+      const user = {
+        id: location.state.userId,
+        nome: location.state.userName,
+        email: location.state.userEmail,
+        senha: location.state.userPassword,
+      };
+      setUserName(user.nome);
+      setUserData(user);
+      setOriginalData({ ...user });
+      // Define a URL da foto de perfil
+      setProfileImage(`http://localhost:3000/usuarios/${user.id}/foto?${new Date().getTime()}`);
+      setLoading(false);
+    } else {
+      fetchUserData();
+    }
+  }, [location.state]);
+
   const toggleProfileModal = () => {
     setIsProfileModalOpen(!isProfileModalOpen);
     if (!isProfileModalOpen && userData) {
       setOriginalData({...userData});
+      // Atualiza a foto ao abrir o modal
+      setProfileImage(`http://localhost:3000/usuarios/${userData.id}/foto?${new Date().getTime()}`);
     }
   };
 
@@ -125,7 +146,7 @@ const TelaMenu: React.FC = () => {
         updateData.email = userData.email;
       }
       
-      if (userData.senha && userData.senha.trim() !== '') { // <--- LÓGICA CORRIGIDA
+      if (userData.senha && userData.senha.trim() !== '') {
         updateData.senha = userData.senha;
       }
 
@@ -152,7 +173,7 @@ const TelaMenu: React.FC = () => {
               setUserName(updateData.nome);
           }
           setAlertMessage('Alterações salvas com sucesso!');
-          setOriginalData({ ...userData, senha: '' }); // Limpa a senha do estado
+          setOriginalData({ ...userData, senha: '' });
           setUserData(prev => prev ? {...prev, senha: ''} : null);
 
           setTimeout(() => {
@@ -171,7 +192,12 @@ const TelaMenu: React.FC = () => {
       <header className="menu-header">
         <div className="user-button-container">
           <button className="user-button" onClick={toggleProfileModal}>
-            <UserIcon />
+            <img 
+              src={profileImage} 
+              alt="Perfil" 
+              className="header-profile-avatar"
+              onError={handleImageError}
+            />
             <span>{loading ? 'Carregando...' : userName}</span>
           </button>
         </div>
@@ -184,9 +210,10 @@ const TelaMenu: React.FC = () => {
               <div className="profile-avatar-wrapper">
                 <label htmlFor="avatar-upload" className="avatar-label">
                   <img
-                    src={previewImage || `http://localhost:3000/usuarios/${userData?.id}/foto`}
+                    src={profileImage}
                     alt="Foto de perfil"
                     className="profile-avatar"
+                    onError={handleImageError}
                   />
                   <input
                     type="file"
@@ -240,7 +267,6 @@ const TelaMenu: React.FC = () => {
             </div>
 
             <div className="profile-actions">
-              <button className="delete-button">Excluir</button>
               <div className="right-buttons">
                 <button className="cancel-button" onClick={closeProfileModal}>Cancelar</button>
                 <button className="save-button" onClick={handleSave}>Salvar</button>
@@ -258,25 +284,6 @@ const TelaMenu: React.FC = () => {
         </div>
       )}
 
-      <main className="menu-main-content">
-        <h2>OLÁ</h2>
-        <div className="central-boxes">
-          <div className="box">
-            <h3>Servidores</h3>
-            <div className="servidor-lista">
-              <div className="servidor-item">
-                <span>Servidor 1</span>
-                <span className="local">Local</span>
-              </div>
-              <div className="servidor-item">
-                <span>Servidor 2</span>
-                <span className="local">Local</span>
-              </div>
-            </div>
-            <button className="perfil-button">Ver Perfil</button>
-          </div>
-        </div>
-      </main>
     </div>
   );
 };
