@@ -2,11 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './telaMenu.css';
-// AVISO: Este caminho ainda pode estar incorreto. O ideal é 'assets/defaultAvatar.jpg'
-import defaultAvatarImg from './img/defaultAvatar.jpg';
+import defaultAvatarImg from '../../assets/defaultAvatar.jpg'; // ✅ 1. IMAGEM IMPORTADA (ajuste o caminho se necessário)
 
-// URL para uma imagem de perfil padrão
-const DEFAULT_AVATAR = defaultAvatarImg;
+// URL para uma imagem de perfil padrão agora usa a imagem local
+const DEFAULT_AVATAR = defaultAvatarImg; // ✅ 2. CONSTANTE ATUALIZADA
 
 interface UserData {
   id: number;
@@ -44,7 +43,6 @@ const TelaMenu: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(DEFAULT_AVATAR);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [objectUrl, setObjectUrl] = useState<string | null>(null); // ✅ NOVO ESTADO ADICIONADO
 
   // Estados para o modal de informações
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -98,7 +96,8 @@ const TelaMenu: React.FC = () => {
       setUserName(response.data.nome);
       setUserData(response.data);
       setOriginalData({ ...response.data });
-
+      
+      // ✅ 3. LÓGICA ROBUSTA PARA BUSCAR FOTO
       // Tenta buscar a foto em um bloco try/catch separado
       try {
         const fotoResponse = await axios.get(`http://localhost:3000/usuarios/${response.data.id}/foto`, {
@@ -106,15 +105,9 @@ const TelaMenu: React.FC = () => {
           responseType: 'blob'
         });
         
-        // ✅ LÓGICA DE GERENCIAMENTO DE MEMÓRIA APLICADA AQUI
         if (fotoResponse.data.size > 0) {
-          // Se já existir uma URL antiga, revogue-a antes de criar uma nova
-          if (objectUrl) {
-            URL.revokeObjectURL(objectUrl);
-          }
-          const newImageUrl = URL.createObjectURL(fotoResponse.data);
-          setProfileImage(newImageUrl);
-          setObjectUrl(newImageUrl); // Guarde a nova URL
+          const imageUrl = URL.createObjectURL(fotoResponse.data);
+          setProfileImage(imageUrl);
         } else {
           setProfileImage(DEFAULT_AVATAR);
         }
@@ -135,16 +128,6 @@ const TelaMenu: React.FC = () => {
     // Apenas chama a função que busca tudo da maneira correta.
     fetchUserData();
   }, []); // Remova a dependência para rodar apenas uma vez no início
-  
-  // ✅ NOVO useEffect ADICIONADO PARA LIMPAR A MEMÓRIA
-  useEffect(() => {
-    // Esta função de retorno é a "função de limpeza"
-    return () => {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
-    };
-  }, [objectUrl]); // Roda sempre que a objectUrl mudar
 
   const toggleProfileModal = () => {
     setIsProfileModalOpen(!isProfileModalOpen);
@@ -278,6 +261,7 @@ const TelaMenu: React.FC = () => {
       console.error('Erro ao salvar informações:', error.response || error.message);
       setAlertMessage(`Erro ao salvar: ${error.response?.data?.message || error.message}`);
     }
+    await fetchUserData();
   };
 
   const handleLogout = () => {
