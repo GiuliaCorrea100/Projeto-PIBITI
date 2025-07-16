@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './telaMenu.css';
-// AVISO: Este caminho ainda pode estar incorreto. O ideal é 'assets/defaultAvatar.jpg'
 import defaultAvatarImg from './img/defaultAvatar.jpg';
+import ListaUsuarios from './ListaUsuarios.tsx';
 
 // URL para uma imagem de perfil padrão
 const DEFAULT_AVATAR = defaultAvatarImg;
@@ -487,6 +487,11 @@ const TelaMenu: React.FC = () => {
           )}
         </div>
       )}
+
+      <main>
+        <ListaUsuarios />
+      </main>
+
     </div>
   );
 };

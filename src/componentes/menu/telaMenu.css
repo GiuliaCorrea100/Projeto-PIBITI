@@ -1,3 +1,25 @@
+/* --- Variáveis Globais (Sugestão) --- */
+:root {
+  --primary-color: #111827; /* Cor principal escura */
+  --spacing-sm: 8px;
+  --spacing-lg: 16px;
+}
+
+/* --- Layout Principal --- */
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
 /* --- Cabeçalho --- */
 .menu-header {
   background-color: var(--primary-color);
@@ -18,7 +40,6 @@
   margin-left: auto;
 }
 
-/* --- Botão genérico de usuário (e também INFORMAÇÕES) --- */
 .user-button,
 .info-button {
   display: flex;
@@ -38,7 +59,6 @@
   background-color: rgba(255, 255, 255, 0.15);
 }
 
-/* --- Avatar no cabeçalho --- */
 .header-profile-avatar {
   width: 40px;
   height: 40px;
@@ -48,8 +68,9 @@
   background-color: #e5e7eb;
 }
 
-/* --- Modal de perfil --- */
-.profile-modal-overlay {
+/* --- Modals e Alertas --- */
+.profile-modal-overlay,
+.custom-alert-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
@@ -65,7 +86,6 @@
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  font-family: 'Inter', sans-serif;
 }
 
 .profile-header {
@@ -130,7 +150,7 @@
 }
 
 .save-button {
-  background-color: #111827;
+  background-color: var(--primary-color);
   color: white;
 }
 
@@ -139,7 +159,7 @@
   color: #b91c1c;
 }
 
-/* --- Avatar editável --- */
+/* --- Avatar Editável --- */
 .profile-avatar-wrapper {
   position: relative;
   width: 64px;
@@ -152,7 +172,6 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #ccc;
-  transition: 0.2s;
 }
 
 .avatar-label {
@@ -170,7 +189,7 @@
   transform: translate(50%, 50%);
   width: 22px;
   height: 22px;
-  background: #111827;
+  background: var(--primary-color);
   color: white;
   font-size: 12px;
   display: flex;
@@ -182,42 +201,31 @@
   z-index: 2;
 }
 
-/* --- Alertas personalizados --- */
-.custom-alert-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1100;
-}
-
+/* --- Alertas Personalizados --- */
 .custom-alert-box {
   background: white;
   padding: 24px 32px;
   border-radius: 8px;
   text-align: center;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-  font-family: 'Inter', sans-serif;
 }
 
 .custom-alert-box p {
   margin-bottom: 16px;
   font-size: 16px;
-  color: #111827;
+  color: var(--primary-color);
 }
 
 .custom-alert-box button {
   padding: 8px 16px;
-  background: #111827;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
 }
 
-/* --- Estilo para checkbox organizado --- */
+/* --- Checkbox --- */
 .checkbox-group {
   display: flex;
   align-items: center;
@@ -235,7 +243,7 @@
 .checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: var(--primary-color); 
+  accent-color: var(--primary-color);
   cursor: pointer;
 }
 
