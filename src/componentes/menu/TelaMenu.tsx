@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './telaMenu.css';
+import { Autocomplete, TextField } from "@mui/material";
+import '@mui/material/styles';
 import defaultAvatarImg from './img/defaultAvatar.jpg';
 import ListaUsuarios from './ListaUsuarios.tsx';
+
 
 // URL para uma imagem de perfil padrão
 const DEFAULT_AVATAR = defaultAvatarImg;
@@ -44,7 +47,7 @@ const TelaMenu: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string>(DEFAULT_AVATAR);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [objectUrl, setObjectUrl] = useState<string | null>(null); // ✅ NOVO ESTADO ADICIONADO
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
 
   // Estados para o modal de informações
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -99,28 +102,25 @@ const TelaMenu: React.FC = () => {
       setUserData(response.data);
       setOriginalData({ ...response.data });
 
-      // Tenta buscar a foto em um bloco try/catch separado
       try {
         const fotoResponse = await axios.get(`http://localhost:3000/usuarios/${response.data.id}/foto`, {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'
         });
         
-        // ✅ LÓGICA DE GERENCIAMENTO DE MEMÓRIA APLICADA AQUI
         if (fotoResponse.data.size > 0) {
-          // Se já existir uma URL antiga, revogue-a antes de criar uma nova
           if (objectUrl) {
             URL.revokeObjectURL(objectUrl);
           }
           const newImageUrl = URL.createObjectURL(fotoResponse.data);
           setProfileImage(newImageUrl);
-          setObjectUrl(newImageUrl); // Guarde a nova URL
+          setObjectUrl(newImageUrl);
         } else {
           setProfileImage(DEFAULT_AVATAR);
         }
       } catch (fotoError) {
         console.warn('Foto do usuário não encontrada, usando avatar padrão.');
-        setProfileImage(DEFAULT_AVATAR); // Se falhar (404), usa o avatar padrão
+        setProfileImage(DEFAULT_AVATAR);
       }
 
     } catch (error) {
@@ -132,19 +132,16 @@ const TelaMenu: React.FC = () => {
   };
 
   useEffect(() => {
-    // Apenas chama a função que busca tudo da maneira correta.
     fetchUserData();
-  }, []); // Remova a dependência para rodar apenas uma vez no início
+  }, []); 
   
-  // ✅ NOVO useEffect ADICIONADO PARA LIMPAR A MEMÓRIA
   useEffect(() => {
-    // Esta função de retorno é a "função de limpeza"
     return () => {
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [objectUrl]); // Roda sempre que a objectUrl mudar
+  }, [objectUrl]);
 
   const toggleProfileModal = () => {
     setIsProfileModalOpen(!isProfileModalOpen);
@@ -166,17 +163,14 @@ const TelaMenu: React.FC = () => {
     
     const updateData: Partial<UserData> = {};
     
-    // Verifica e inclui nome se foi alterado
     if (userData.nome !== originalData.nome) {
       updateData.nome = userData.nome;
     }
     
-    // Verifica e inclui email se foi alterado
     if (userData.email !== originalData.email) {
       updateData.email = userData.email;
     }
     
-    // Verifica e inclui senha se foi preenchida
     if (userData.senha && userData.senha.trim() !== '') {
       if (userData.senha.length < 8) {
         setAlertMessage('A senha deve conter pelo menos 8 caracteres');
@@ -205,17 +199,14 @@ const TelaMenu: React.FC = () => {
       );
       
       if (response.status === 200) {
-        // Atualiza os dados do usuário
         const updatedUser = await axios.get<UserData>(`http://localhost:3000/autorizacoes/me`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
         
-        // Atualiza TODOS os estados relevantes
         setUserName(updatedUser.data.nome);
         setUserData(updatedUser.data);
         setOriginalData(updatedUser.data);
         
-        // Atualiza a imagem do perfil para forçar recarregamento
         setProfileImage(`http://localhost:3000/usuarios/${updatedUser.data.id}/foto?${new Date().getTime()}`);
         
         setAlertMessage('Alterações salvas com sucesso!');
@@ -295,12 +286,10 @@ const TelaMenu: React.FC = () => {
       });
       setInstituicoes(instituicoesResponse.data);
       
-      // Busca os dados atualizados do usuário
       const response = await axios.get<UserData>('http://localhost:3000/autorizacoes/me', {
         headers: { Authorization: `Bearer ${token}` },
       });
       
-      // Preenche os estados com os dados do banco
       setCargo(response.data.cargo || '');
       setinstituicaoId(response.data.instituicaoId || '');
       setAceitaPerto(response.data.aceitaPerto || false);
@@ -426,6 +415,7 @@ const TelaMenu: React.FC = () => {
         </div>
       )}
 
+      {/* BLOCO DE CÓDIGO ALTERADO ABAIXO */}
       {isInfoModalOpen && (
         <div className="profile-modal-overlay" onClick={closeInfoModal}>
           <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -443,19 +433,26 @@ const TelaMenu: React.FC = () => {
 
               <div className="field-group">
                 <label>Instituição Atual</label>
-                <select 
-                  value={instituicaoId} 
-                  onChange={(e) => setinstituicaoId(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="custom-select" 
-                >
-                  <option value="">Nenhuma</option> 
-                  
-                  {instituicoes.map(inst => (
-                    <option key={inst.id} value={inst.id}>
-                      {inst.nome}
-                    </option>
-                  ))}
-                </select>
+                <Autocomplete
+                  size='small'
+                  options={instituicoes}
+                  getOptionLabel={(option) => option.nome}
+                  value={instituicoes.find(inst => inst.id === instituicaoId) || null}
+                  onChange={(event, newValue) => {
+                    setinstituicaoId(newValue?.id || '');
+                  }}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      placeholder="Digite para buscar..."
+                      fullWidth
+                      size="small"
+                    />
+                  )}
+                  noOptionsText="Nenhuma instituição encontrada"
+                />
               </div>
 
               <div className="field-group checkbox-group">

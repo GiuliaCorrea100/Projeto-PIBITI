@@ -40,23 +40,50 @@ main {
   margin-left: auto;
 }
 
+/* --- Botões principais (escopo restrito) --- */
 .user-button,
-.info-button {
+.info-button,
+.cancel-button,
+.save-button,
+.delete-button {
   display: flex;
   align-items: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: white;
+  justify-content: center;
+  font-family: inherit;
   font-size: 16px;
-  padding: 8px 12px;
+  padding: 8px 14px;
+  border: none;
   border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Especificidades para cada botão */
+.user-button,
+.info-button {
+  background: none;
+  color: white;
   transition: background-color 0.3s ease;
 }
 
 .user-button:hover,
 .info-button:hover {
   background-color: rgba(255, 255, 255, 0.15);
+}
+
+.cancel-button {
+  background-color: #f3f4f6;
+  color: black;
+  margin-right: 8px;
+}
+
+.save-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.right-buttons {
+  display: flex;
 }
 
 .header-profile-avatar {
@@ -132,31 +159,6 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.cancel-button,
-.save-button,
-.delete-button {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.cancel-button {
-  background-color: #f3f4f6;
-  margin-right: 8px;
-}
-
-.save-button {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.delete-button {
-  background: #fee2e2;
-  color: #b91c1c;
 }
 
 /* --- Avatar Editável --- */
@@ -249,4 +251,29 @@ main {
 
 .checkbox-text {
   user-select: none;
+}
+
+/* --- Autocomplete específico --- */
+.autocomplete-field .MuiInputBase-root {
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  font-size: 14px;
+  padding: 0;
+}
+
+.autocomplete-field .MuiOutlinedInput-notchedOutline {
+  border-color: #ddd;
+}
+
+.autocomplete-field .MuiAutocomplete-inputRoot {
+  padding: 0 !important;
+}
+
+.autocomplete-field input {
+  padding: 8px 10px !important;
+}
+
+.autocomplete-field button {
+  all: unset; /* Impede que seus estilos de botão afetem o dropdown interno */
+  cursor: pointer;
 }
