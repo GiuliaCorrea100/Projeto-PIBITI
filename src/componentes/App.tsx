@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import LoginCadastro from "./loginCadastro/LoginCadastro.tsx";
 import TelaMenu from "./menu/TelaMenu.tsx";
+import NotificacoesPage from "./menu/elementos/Notificacoes.tsx";
 import '../../src/style.css';
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<LoginCadastro />} />
                 <Route path="/TelaPrincipal" element={<TelaMenu />} />
+                <Route path="/NotificacoesPage" element={<NotificacoesPage />} />
             </Routes>
         </Router>
     );

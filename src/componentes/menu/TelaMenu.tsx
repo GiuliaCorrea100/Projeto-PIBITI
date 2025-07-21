@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './telaMenu.css';
 import { Autocomplete, TextField } from "@mui/material";
 import '@mui/material/styles';
 import defaultAvatarImg from './img/defaultAvatar.jpg';
-import ListaUsuarios from './ListaUsuarios.tsx';
+import ListaUsuarios from '../menu/elementos/ListaUsuarios.tsx';
+import NotificacaoBadge from './elementos/NotificacaoBadge.tsx';
 
 
 // URL para uma imagem de perfil padrão
@@ -20,6 +21,14 @@ interface UserData {
   instituicaoId?: number;
   aceitaPerto?: boolean;
   createdAt?: string;
+  // Propriedade adicionada para carregar os destinos salvos
+  instituicoesDestino?: number[];
+}
+
+// Definição do tipo para uma instituição, para consistência
+interface Instituicao {
+  id: number;
+  nome: string;
 }
 
 const UserIcon: React.FC = () => (
@@ -54,8 +63,30 @@ const TelaMenu: React.FC = () => {
   const [cargo, setCargo] = useState('');
   const [instituicaoId, setinstituicaoId] = useState<number | ''>('');
   const [aceitaPerto, setAceitaPerto] = useState(false);
+  const [instituicoes, setInstituicoes] = useState<Instituicao[]>([]);
+  
+  // ---- FUNCIONALIDADES DE ITINERÁRIO ADICIONADAS ----
+  const [instituicoesDestino, setInstituicoesDestino] = useState<(number | null)[]>([null]);
 
-  const [instituicoes, setInstituicoes] = useState<{ id: number; nome: string }[]>([]);
+  const handleInstituicaoDestinoChange = (index: number, newValue: Instituicao | null) => {
+    const novas = [...instituicoesDestino];
+    novas[index] = newValue ? newValue.id : null;
+    setInstituicoesDestino(novas);
+  };
+
+  const addInstituicaoDestino = () => {
+    setInstituicoesDestino([...instituicoesDestino, null]);
+  };
+
+  const removeInstituicaoDestino = (index: number) => {
+    if (instituicoesDestino.length > 1) {
+      const novas = instituicoesDestino.filter((_, i) => i !== index);
+      setInstituicoesDestino(novas);
+    }
+  };
+  // ---- FIM DAS FUNCIONALIDADES DE ITINERÁRIO ----
+
+  const navigate = useNavigate();
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = DEFAULT_AVATAR;
@@ -233,14 +264,20 @@ const TelaMenu: React.FC = () => {
   const handleSaveInfo = async () => {
     if (!userData?.id) return;
 
+    // Filtra destinos nulos antes de enviar para o backend
+    const destinosValidos = instituicoesDestino.filter(id => id !== null);
+
+    const dataToSave = {
+      cargo,
+      instituicaoId: instituicaoId === '' ? null : Number(instituicaoId),
+      aceitaPerto,
+      instituicoesDestino: destinosValidos // Envia a lista de destinos
+    };
+
     try {
       const response = await axios.put(
         `http://localhost:3000/usuarios/${userData.id}`,
-        {
-          cargo,
-          instituicaoId: instituicaoId === '' ? null : Number(instituicaoId),
-          aceitaPerto
-        },
+        dataToSave, // Objeto atualizado com os destinos
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -259,7 +296,6 @@ const TelaMenu: React.FC = () => {
         setOriginalData({ ...updatedUser.data });
 
         setAlertMessage('Informações salvas com sucesso!');
-        setUserData(prev => prev ? {...prev, cargo, instituicaoId: Number(instituicaoId), aceitaPerto } : null);
         setTimeout(() => {
           setAlertMessage(null);
           closeInfoModal();
@@ -294,6 +330,14 @@ const TelaMenu: React.FC = () => {
       setinstituicaoId(response.data.instituicaoId || '');
       setAceitaPerto(response.data.aceitaPerto || false);
       
+      // Carrega os destinos salvos ou inicia com um campo vazio
+      const destinosSalvos = response.data.instituicoesDestino;
+      if (destinosSalvos && destinosSalvos.length > 0) {
+        setInstituicoesDestino(destinosSalvos);
+      } else {
+        setInstituicoesDestino([null]);
+      }
+      
       setIsInfoModalOpen(true);
     } catch (error) {
       console.error('Erro ao cargar informações do usuário:', error);
@@ -319,6 +363,10 @@ const TelaMenu: React.FC = () => {
           </button>
         </div>
         <div className='right-header'>
+          <button className="user-button" onClick={() => navigate('/NotificacoesPage')}>
+            NOTIFICAÇÕES
+            <NotificacaoBadge />
+          </button>
           <button className="user-button">
             MENSAGENS
           </button>
@@ -334,6 +382,7 @@ const TelaMenu: React.FC = () => {
       {isProfileModalOpen && (
         <div className="profile-modal-overlay" onClick={closeProfileModal}>
           <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
+            {/* Modal de perfil (inalterado) */}
             <div className="profile-header">
               <div className="profile-avatar-wrapper">
                 <label htmlFor="avatar-upload" className="avatar-label">
@@ -353,13 +402,11 @@ const TelaMenu: React.FC = () => {
                   <span className="avatar-edit-icon">📸</span>
                 </label>
               </div>
-
               <div className="profile-details">
                 <h2>{userData?.nome}</h2>
                 <p>{userData?.email}</p>
               </div>
             </div>
-
             <div className="profile-fields">
               <div className="field-group">
                 <label>Nome</label>
@@ -396,7 +443,6 @@ const TelaMenu: React.FC = () => {
                 />
               </div>
             </div>
-
             <div className="profile-actions">
               <div className="right-buttons">
                 <button className="cancel-button" onClick={closeProfileModal}>Cancelar</button>
@@ -415,7 +461,6 @@ const TelaMenu: React.FC = () => {
         </div>
       )}
 
-      {/* BLOCO DE CÓDIGO ALTERADO ABAIXO */}
       {isInfoModalOpen && (
         <div className="profile-modal-overlay" onClick={closeInfoModal}>
           <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -455,6 +500,56 @@ const TelaMenu: React.FC = () => {
                 />
               </div>
 
+              {/* ---- BLOCO JSX DE ITINERÁRIO ADICIONADO ---- */}
+              <div className="field-group">
+                <label>Instituição Destino</label>
+                {instituicoesDestino.map((instId, index) => (
+                  <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                    <Autocomplete
+                      size='small'
+                      options={instituicoes}
+                      getOptionLabel={(option) => option.nome}
+                      value={instituicoes.find(i => i.id === instId) || null}
+                      onChange={(event, newValue) => {
+                        handleInstituicaoDestinoChange(index, newValue);
+                      }}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="outlined"
+                          placeholder={`Instituição ${index + 1}`}
+                          fullWidth
+                          size="small"
+                        />
+                      )}
+                      noOptionsText="Nenhuma instituição encontrada"
+                      style={{ flex: 1 }}
+                    />
+                    {index === 0 ? (
+                      <button
+                        type="button"
+                        onClick={addInstituicaoDestino}
+                        style={{ marginLeft: '8px' }}
+                        title="Adicionar instituição"
+                      >
+                        ➕
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => removeInstituicaoDestino(index)}
+                        style={{ marginLeft: '8px' }}
+                        title="Remover instituição"
+                      >
+                        ❌
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {/* ---- FIM DO BLOCO JSX DE ITINERÁRIO ---- */}
+
               <div className="field-group checkbox-group">
                 <label className='checkbox-label'>
                   <input 
@@ -486,7 +581,7 @@ const TelaMenu: React.FC = () => {
       )}
 
       <main>
-        <ListaUsuarios />
+        {userData && <ListaUsuarios usuarioLogadoId={userData.id} />}
       </main>
 
     </div>

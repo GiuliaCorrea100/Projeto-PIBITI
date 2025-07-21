@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { Box, TextField, Button, Typography } from "@mui/material";
-import { getUsuarios, Usuario } from '../../api/usuarioService.ts';
+import { getUsuarios, Usuario } from '../../../api/usuarioService.ts';
+
+interface ListaUsuariosProps {
+  usuarioLogadoId: number;
+}
 
 // Definição das colunas para o DataGrid
 const columns: GridColDef<Usuario>[] = [
@@ -12,7 +16,7 @@ const columns: GridColDef<Usuario>[] = [
     flex: 1 
   },
   { 
-    field: 'email', 
+    field: 'email',
     headerName: 'Email', 
     flex: 1 
   },
@@ -41,7 +45,7 @@ const columns: GridColDef<Usuario>[] = [
   }
 ];
 
-export default function ListaUsuarios() {
+export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
   const [busca, setBusca] = useState('');
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,11 +75,13 @@ export default function ListaUsuarios() {
     carregarUsuarios();
   }, [navigate]);
 
-  const dadosFiltrados = usuarios.filter(usuario =>
-    usuario.nome.toLowerCase().includes(busca.toLowerCase()) ||
-    usuario.email.toLowerCase().includes(busca.toLowerCase()) ||
-    (usuario.cargo && usuario.cargo.toLowerCase().includes(busca.toLowerCase()))
-  );
+  const dadosFiltrados = usuarios
+    .filter(usuario => usuario.id !== usuarioLogadoId) // 👈 remove o logado
+    .filter(usuario =>
+      usuario.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      usuario.email.toLowerCase().includes(busca.toLowerCase()) ||
+      (usuario.cargo && usuario.cargo.toLowerCase().includes(busca.toLowerCase()))
+    );
 
   return (
     <Box sx={{ p: 3, width: '100%' }}>
@@ -83,16 +89,14 @@ export default function ListaUsuarios() {
         .
       </Typography>
 
-      {/* Container para a barra de busca e o botão de adicionar */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <TextField
           label="Buscar por nome, email ou cargo"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           variant="outlined"
-          // Ajustado para dar espaço ao botão
           sx={{ width: '50%' }}
-          size="small" // Deixa o campo de busca com a mesma altura dos botões pequenos
+          size="small"
         />
       </Box>
 
