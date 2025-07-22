@@ -1,12 +1,24 @@
 // src/api/usuarioService.ts
 import axios from 'axios';
 
+export interface Instituicao {
+  id: number;
+  nome: string;
+}
+
 export interface Usuario {
   id: number;
   nome: string;
   email: string;
   cargo: string;
   fotoUrl?: string;
+  instituicao?: {
+    id: number;
+    nome: string;
+  };
+  instituicaoDestino?: Array<{
+    instituicao: Instituicao;
+  }>;
 }
 
 const API_URL = 'http://localhost:3000/usuarios';
