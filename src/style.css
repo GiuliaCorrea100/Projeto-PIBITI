@@ -63,13 +63,6 @@ body {
     font-weight: bold;
 }
 
-/* --- Botão do Usuário --- */
-.user-button-container {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-}
-
 .user-button {
     background-color: transparent;
     border: none;
@@ -251,7 +244,10 @@ body {
   margin: var(--spacing-md) 0;
 }
 
-button[type="button"] {
+/* --- MODIFICADO --- */
+.form-container button[type="button"],
+.custom-alert-box button,
+.profile-actions button {
   background-color: var(--primary-color);
   color: white;
   border: none;
@@ -265,9 +261,12 @@ button[type="button"] {
   margin-bottom: var(--spacing-md);
 }
 
-button[type="button"]:hover {
+.form-container button[type="button"]:hover,
+.custom-alert-box button:hover,
+.profile-actions button:hover {
   background-color: var(--primary-color-hover);
 }
+/* --- FIM DA MODIFICAÇÃO --- */
 
 button[type="button"]:disabled {
   background-color: #ccc;

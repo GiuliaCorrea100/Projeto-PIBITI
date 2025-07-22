@@ -1,4 +1,103 @@
-.profile-modal-overlay {
+/* --- Variáveis Globais (Sugestão) --- */
+:root {
+  --primary-color: #111827; /* Cor principal escura */
+  --spacing-sm: 8px;
+  --spacing-lg: 16px;
+}
+
+/* --- Layout Principal --- */
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+/* --- Cabeçalho --- */
+.menu-header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.left-header {
+  display: flex;
+  align-items: center;
+}
+
+.right-header {
+  display: flex;
+  margin-left: auto;
+}
+
+/* --- Botões principais (escopo restrito) --- */
+.user-button,
+.info-button,
+.cancel-button,
+.save-button,
+.delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 16px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Especificidades para cada botão */
+.user-button,
+.info-button {
+  background: none;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.user-button:hover,
+.info-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.cancel-button {
+  background-color: #f3f4f6;
+  color: black;
+  margin-right: 8px;
+}
+
+.save-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.right-buttons {
+  display: flex;
+}
+
+.header-profile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+  background-color: #e5e7eb;
+}
+
+/* --- Modals e Alertas --- */
+.profile-modal-overlay,
+.custom-alert-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
@@ -14,7 +113,6 @@
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  font-family: 'Inter', sans-serif;
 }
 
 .profile-header {
@@ -63,34 +161,7 @@
   align-items: center;
 }
 
-.delete-button {
-  background: #fee2e2;
-  color: #b91c1c;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.cancel-button,
-.save-button {
-  padding: 8px 14px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.cancel-button {
-  background-color: #f3f4f6;
-  margin-right: 8px;
-}
-
-.save-button {
-  background-color: #111827;
-  color: white;
-}
-
+/* --- Avatar Editável --- */
 .profile-avatar-wrapper {
   position: relative;
   width: 64px;
@@ -103,7 +174,6 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #ccc;
-  transition: 0.2s;
 }
 
 .avatar-label {
@@ -121,7 +191,7 @@
   transform: translate(50%, 50%);
   width: 22px;
   height: 22px;
-  background: #111827;
+  background: var(--primary-color);
   color: white;
   font-size: 12px;
   display: flex;
@@ -129,61 +199,154 @@
   justify-content: center;
   border-radius: 50%;
   border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   z-index: 2;
 }
 
-.custom-alert-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1100;
-}
-
+/* --- Alertas Personalizados --- */
 .custom-alert-box {
   background: white;
   padding: 24px 32px;
   border-radius: 8px;
   text-align: center;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-  font-family: 'Inter', sans-serif;
 }
 
 .custom-alert-box p {
   margin-bottom: 16px;
   font-size: 16px;
-  color: #111827;
+  color: var(--primary-color);
 }
 
 .custom-alert-box button {
   padding: 8px 16px;
-  background: #111827;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
 }
 
-/* Estilos para a foto de perfil no cabeçalho */
-.header-profile-avatar {
-  width: 40px;           /* Largura da imagem */
-  height: 40px;          /* Altura da imagem */
-  border-radius: 50%;    /* Transforma a imagem em um círculo */
-  object-fit: cover;     /* Garante que a imagem preencha o espaço sem distorcer */
-  margin-right: 12px;    /* Cria um espaço entre a foto e o nome do usuário */
-  background-color: #e5e7eb; /* Cor de fundo caso a imagem não carregue */
-}
-
-/* Ajuste no botão para alinhar a imagem e o texto corretamente */
-.user-button {
+/* --- Checkbox --- */
+.checkbox-group {
   display: flex;
   align-items: center;
-  background: none;
-  border: none;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #444;
   cursor: pointer;
-  color: white; /* Ou a cor que preferir para o texto */
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.checkbox-text {
+  user-select: none;
+}
+
+/* --- Autocomplete específico --- */
+.autocomplete-field .MuiInputBase-root {
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  font-size: 14px;
+  padding: 0;
+}
+
+.autocomplete-field .MuiOutlinedInput-notchedOutline {
+  border-color: #ddd;
+}
+
+.autocomplete-field .MuiAutocomplete-inputRoot {
+  padding: 0 !important;
+}
+
+.autocomplete-field input {
+  padding: 8px 10px !important;
+}
+
+.autocomplete-field button {
+  all: unset; /* Impede que seus estilos de botão afetem o dropdown interno */
+  cursor: pointer;
+}
+
+
+.notificacoes-container {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: 'Nunito', sans-serif;
+}
+
+.notificacao-card {
+  display: flex;
+  align-items: center;
+  background-color: #f7f9fb;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.avatar-notificacao {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
+.info-notificacao {
+  flex-grow: 1;
+}
+
+.info-notificacao strong {
   font-size: 16px;
+  display: block;
+}
+
+.info-notificacao small {
+  font-size: 12px;
+  color: #777;
+}
+
+.botoes-notificacao {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-aceitar,
+.btn-recusar {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-aceitar {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.btn-recusar {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-aceitar:hover {
+  background-color: #45a049;
+}
+
+.btn-recusar:hover {
+  background-color: #d32f2f;
 }
