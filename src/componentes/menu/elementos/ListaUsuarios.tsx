@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, TextField, Button, Typography, Avatar, Paper } from "@mui/material";
+import { Box, TextField, Button, Typography, Avatar, Paper, Modal, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { getUsuarios, Usuario } from '../../../api/usuarioService.ts';
 import defaultAvatarImg from '../img/defaultAvatar.jpg';
 
@@ -11,7 +11,13 @@ interface ListaUsuariosProps {
 
 const DEFAULT_AVATAR = defaultAvatarImg;
 
-const columns: GridColDef<Usuario>[] = [
+const generateUsuarioName = (userId: number): string => {
+  const userNumber = 100 + (userId % 900);
+  return `Usuario${userNumber}`;
+};
+
+// MODIFICAÇÃO: Adicionamos a propriedade onSolicitarClick à interface das colunas
+const getColumns = (usuarioLogadoId: number, onSolicitarClick: (usuario: Usuario) => void): GridColDef<Usuario>[] => [
   {
     field: 'avatar',
     headerName: 'Foto',
@@ -29,7 +35,14 @@ const columns: GridColDef<Usuario>[] = [
   {
     field: 'nome',
     headerName: 'Nome',
-    flex: 1
+    flex: 1,
+    renderCell: (params: GridRenderCellParams<Usuario>) => (
+      <Typography>
+        {params.row.id === usuarioLogadoId 
+          ? params.row.nome 
+          : generateUsuarioName(params.row.id)}
+      </Typography>
+    )
   },
   {
     field: 'instituicaoAtual',
@@ -48,8 +61,7 @@ const columns: GridColDef<Usuario>[] = [
     sortable: false,
     renderCell: (params: GridRenderCellParams<Usuario>) => (
       <Button
-        component={Link}
-        to={`/usuarios/${params.row.id}`}
+        onClick={() => onSolicitarClick(params.row)}
         variant="outlined"
         size="small"
         sx={{
@@ -69,6 +81,34 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  
+  // Estado para controlar o modal de confirmação
+  const [openModal, setOpenModal] = useState(false);
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(null);
+
+  // Função para lidar com o clique no botão de solicitação
+  const handleSolicitarClick = (usuario: Usuario) => {
+    setUsuarioSelecionado(usuario);
+    setOpenModal(true);
+  };
+
+  // Função para confirmar a solicitação
+  const handleConfirmarSolicitacao = () => {
+    setOpenModal(false);
+    // Aqui você pode adicionar a lógica para enviar a solicitação de permuta
+    console.log('Solicitação enviada para:', usuarioSelecionado);
+    // Depois de enviar, você pode navegar para a página do usuário ou mostrar uma mensagem
+    // navigate(`/usuarios/${usuarioSelecionado?.id}`);
+  };
+
+  // Função para cancelar a solicitação
+  const handleCancelarSolicitacao = () => {
+    setOpenModal(false);
+    setUsuarioSelecionado(null);
+  };
+
+  // MODIFICAÇÃO: Passamos a função handleSolicitarClick para as colunas
+  const columns = getColumns(usuarioLogadoId, handleSolicitarClick);
 
   useEffect(() => {
     const carregarUsuarios = async () => {
@@ -193,6 +233,36 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
           />
         </Box>
       </Paper>
+
+      {/* Modal de Confirmação */}
+      <Dialog
+        open={openModal}
+        onClose={handleCancelarSolicitacao}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          Confirmar se deseja fazer permuta com:
+        </DialogTitle>
+        <DialogContent>
+          <DialogContent>
+          <Typography variant="body1" sx={{ textAlign: 'center', fontWeight: 'bold', mt: 1 }}>
+            {generateUsuarioName(usuarioSelecionado?.id || 0)}
+          </Typography>
+          <Typography variant="body1" sx={{ textAlign: 'center' }}>
+            {usuarioSelecionado?.instituicao?.nome || 'Instituição não informada'}
+          </Typography>
+        </DialogContent>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelarSolicitacao} color="primary">
+            Não
+          </Button>
+          <Button onClick={handleConfirmarSolicitacao} color="primary" autoFocus>
+            Sim
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
