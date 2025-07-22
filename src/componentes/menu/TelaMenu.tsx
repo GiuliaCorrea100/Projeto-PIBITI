@@ -369,12 +369,6 @@ const TelaMenu: React.FC = () => {
           </button>
         </div>
         <div className='right-header'>
-          <button className="user-button" onClick={() => navigate('/NotificacoesPage')}>
-            NOTIFICAÇÕES
-          </button>
-          <button className="user-button">
-            MENSAGENS
-          </button>
           <button className="user-button" onClick={openInfoModal}>
             INFORMAÇÕES
           </button>

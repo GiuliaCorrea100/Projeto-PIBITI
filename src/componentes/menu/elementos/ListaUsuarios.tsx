@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, TextField, Button, Typography, Avatar, Paper } from "@mui/material";
+import { Box, TextField, Button, Typography, Avatar, Paper, Modal, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { getUsuarios, Usuario } from '../../../api/usuarioService.ts';
 import defaultAvatarImg from '../img/defaultAvatar.jpg';
 
@@ -11,16 +11,13 @@ interface ListaUsuariosProps {
 
 const DEFAULT_AVATAR = defaultAvatarImg;
 
-// MODIFICAÇÃO 1: Nova função para gerar nomes no formato "usuarioXXX"
-// Usa o ID do usuário como base para o número, garantindo consistência
 const generateUsuarioName = (userId: number): string => {
-  // Gera um número entre 100 e 999 baseado no ID do usuário
-  const userNumber = 100 + (userId % 900); // Garante número de 3 dígitos
-  return `usuario${userNumber}`;
+  const userNumber = 100 + (userId % 900);
+  return `Usuario${userNumber}`;
 };
 
-// MODIFICAÇÃO 2: Transformamos as colunas em uma função que recebe o ID do usuário logado
-const getColumns = (usuarioLogadoId: number): GridColDef<Usuario>[] => [
+// MODIFICAÇÃO: Adicionamos a propriedade onSolicitarClick à interface das colunas
+const getColumns = (usuarioLogadoId: number, onSolicitarClick: (usuario: Usuario) => void): GridColDef<Usuario>[] => [
   {
     field: 'avatar',
     headerName: 'Foto',
@@ -39,8 +36,6 @@ const getColumns = (usuarioLogadoId: number): GridColDef<Usuario>[] => [
     field: 'nome',
     headerName: 'Nome',
     flex: 1,
-    // MODIFICAÇÃO 3: Renderização condicional do nome
-    // Mostra o nome real apenas para o usuário logado, "usuarioXXX" para os outros
     renderCell: (params: GridRenderCellParams<Usuario>) => (
       <Typography>
         {params.row.id === usuarioLogadoId 
@@ -66,8 +61,7 @@ const getColumns = (usuarioLogadoId: number): GridColDef<Usuario>[] => [
     sortable: false,
     renderCell: (params: GridRenderCellParams<Usuario>) => (
       <Button
-        component={Link}
-        to={`/usuarios/${params.row.id}`}
+        onClick={() => onSolicitarClick(params.row)}
         variant="outlined"
         size="small"
         sx={{
@@ -87,9 +81,34 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  
+  // Estado para controlar o modal de confirmação
+  const [openModal, setOpenModal] = useState(false);
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(null);
 
-  // MODIFICAÇÃO 4: Usamos a função getColumns passando o usuarioLogadoId
-  const columns = getColumns(usuarioLogadoId);
+  // Função para lidar com o clique no botão de solicitação
+  const handleSolicitarClick = (usuario: Usuario) => {
+    setUsuarioSelecionado(usuario);
+    setOpenModal(true);
+  };
+
+  // Função para confirmar a solicitação
+  const handleConfirmarSolicitacao = () => {
+    setOpenModal(false);
+    // Aqui você pode adicionar a lógica para enviar a solicitação de permuta
+    console.log('Solicitação enviada para:', usuarioSelecionado);
+    // Depois de enviar, você pode navegar para a página do usuário ou mostrar uma mensagem
+    // navigate(`/usuarios/${usuarioSelecionado?.id}`);
+  };
+
+  // Função para cancelar a solicitação
+  const handleCancelarSolicitacao = () => {
+    setOpenModal(false);
+    setUsuarioSelecionado(null);
+  };
+
+  // MODIFICAÇÃO: Passamos a função handleSolicitarClick para as colunas
+  const columns = getColumns(usuarioLogadoId, handleSolicitarClick);
 
   useEffect(() => {
     const carregarUsuarios = async () => {
@@ -119,7 +138,6 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
     carregarUsuarios();
   }, [navigate]);
 
-  // MODIFICAÇÃO 5: Mantemos a filtragem original, mas agora os nomes serão exibidos conforme a renderização personalizada
   const dadosFiltrados = usuarios
     .filter(usuario => usuario.id !== usuarioLogadoId)
     .filter(usuario =>
@@ -215,6 +233,36 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
           />
         </Box>
       </Paper>
+
+      {/* Modal de Confirmação */}
+      <Dialog
+        open={openModal}
+        onClose={handleCancelarSolicitacao}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          Confirmar se deseja fazer permuta com:
+        </DialogTitle>
+        <DialogContent>
+          <DialogContent>
+          <Typography variant="body1" sx={{ textAlign: 'center', fontWeight: 'bold', mt: 1 }}>
+            {generateUsuarioName(usuarioSelecionado?.id || 0)}
+          </Typography>
+          <Typography variant="body1" sx={{ textAlign: 'center' }}>
+            {usuarioSelecionado?.instituicao?.nome || 'Instituição não informada'}
+          </Typography>
+        </DialogContent>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelarSolicitacao} color="primary">
+            Não
+          </Button>
+          <Button onClick={handleConfirmarSolicitacao} color="primary" autoFocus>
+            Sim
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
