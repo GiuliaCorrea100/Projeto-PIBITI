@@ -118,7 +118,7 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
               paginationModel: { pageSize: 5, page: 0 },
             },
           }}
-          pageSizeOptions={[10, 20, 50]}
+          pageSizeOptions={[5, 10, 20, 50]}
           sx={{
             '& .MuiDataGrid-cell': {
               display: 'flex',

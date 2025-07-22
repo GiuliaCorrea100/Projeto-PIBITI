@@ -6,11 +6,15 @@ import { Autocomplete, TextField } from "@mui/material";
 import '@mui/material/styles';
 import defaultAvatarImg from './img/defaultAvatar.jpg';
 import ListaUsuarios from '../menu/elementos/ListaUsuarios.tsx';
-import NotificacaoBadge from './elementos/NotificacaoBadge.tsx';
 
 
-// URL para uma imagem de perfil padrão
 const DEFAULT_AVATAR = defaultAvatarImg;
+
+interface InstituicaoDestinoData {
+  id: number;
+  usuarioId: number;
+  instituicaoId: number | null;
+}
 
 interface UserData {
   id: number;
@@ -21,11 +25,9 @@ interface UserData {
   instituicaoId?: number;
   aceitaPerto?: boolean;
   createdAt?: string;
-  // Propriedade adicionada para carregar os destinos salvos
-  instituicoesDestino?: number[];
+  instituicaoDestino?: InstituicaoDestinoData[];
 }
 
-// Definição do tipo para uma instituição, para consistência
 interface Instituicao {
   id: number;
   nome: string;
@@ -58,33 +60,31 @@ const TelaMenu: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
 
-  // Estados para o modal de informações
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [cargo, setCargo] = useState('');
   const [instituicaoId, setinstituicaoId] = useState<number | ''>('');
   const [aceitaPerto, setAceitaPerto] = useState(false);
   const [instituicoes, setInstituicoes] = useState<Instituicao[]>([]);
+  const [dadosModalProntos, setDadosModalProntos] = useState<Instituicao[] | null>(null);
   
-  // ---- FUNCIONALIDADES DE ITINERÁRIO ADICIONADAS ----
-  const [instituicoesDestino, setInstituicoesDestino] = useState<(number | null)[]>([null]);
+  const [instituicaoDestino, setInstituicaoDestino] = useState<(number | null)[]>([null]);
 
   const handleInstituicaoDestinoChange = (index: number, newValue: Instituicao | null) => {
-    const novas = [...instituicoesDestino];
+    const novas = [...instituicaoDestino];
     novas[index] = newValue ? newValue.id : null;
-    setInstituicoesDestino(novas);
+    setInstituicaoDestino(novas);
   };
 
   const addInstituicaoDestino = () => {
-    setInstituicoesDestino([...instituicoesDestino, null]);
+    setInstituicaoDestino([...instituicaoDestino, null]);
   };
 
   const removeInstituicaoDestino = (index: number) => {
-    if (instituicoesDestino.length > 1) {
-      const novas = instituicoesDestino.filter((_, i) => i !== index);
-      setInstituicoesDestino(novas);
+    if (instituicaoDestino.length > 1) {
+      const novas = instituicaoDestino.filter((_, i) => i !== index);
+      setInstituicaoDestino(novas);
     }
   };
-  // ---- FIM DAS FUNCIONALIDADES DE ITINERÁRIO ----
 
   const navigate = useNavigate();
 
@@ -264,20 +264,19 @@ const TelaMenu: React.FC = () => {
   const handleSaveInfo = async () => {
     if (!userData?.id) return;
 
-    // Filtra destinos nulos antes de enviar para o backend
-    const destinosValidos = instituicoesDestino.filter(id => id !== null);
+    const destinosValidos = instituicaoDestino.filter(id => id !== null);
 
     const dataToSave = {
       cargo,
       instituicaoId: instituicaoId === '' ? null : Number(instituicaoId),
       aceitaPerto,
-      instituicoesDestino: destinosValidos // Envia a lista de destinos
+      instituicaoDestino: destinosValidos 
     };
 
     try {
       const response = await axios.put(
         `http://localhost:3000/usuarios/${userData.id}`,
-        dataToSave, // Objeto atualizado com os destinos
+        dataToSave,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -313,36 +312,43 @@ const TelaMenu: React.FC = () => {
   };
 
   const openInfoModal = async () => {
+    if (!userData) {
+      console.error("Dados do usuário não carregados.");
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
+      const response = await axios.get('http://localhost:3000/instituicoes', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDadosModalProntos(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar instituições:', error);
+    }
+  };
 
-      const instituicoesResponse = await axios.get('http://localhost:3000/instituicoes', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setInstituicoes(instituicoesResponse.data);
-      
-      const response = await axios.get<UserData>('http://localhost:3000/autorizacoes/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      setCargo(response.data.cargo || '');
-      setinstituicaoId(response.data.instituicaoId || '');
-      setAceitaPerto(response.data.aceitaPerto || false);
-      
-      // Carrega os destinos salvos ou inicia com um campo vazio
-      const destinosSalvos = response.data.instituicoesDestino;
-      if (destinosSalvos && destinosSalvos.length > 0) {
-        setInstituicoesDestino(destinosSalvos);
+  useEffect(() => {
+    if (dadosModalProntos && userData) {
+      setInstituicoes(dadosModalProntos);
+      setCargo(userData.cargo || '');
+      setinstituicaoId(userData.instituicaoId || '');
+      setAceitaPerto(userData.aceitaPerto || false);
+
+      const destinosSalvosDoBackend = userData.instituicaoDestino;
+
+      if (destinosSalvosDoBackend && destinosSalvosDoBackend.length > 0) {
+        const idsDeDestino = destinosSalvosDoBackend.map(d => d.instituicaoId);
+        setInstituicaoDestino(idsDeDestino);
       } else {
-        setInstituicoesDestino([null]);
+        setInstituicaoDestino([null]);
       }
       
       setIsInfoModalOpen(true);
-    } catch (error) {
-      console.error('Erro ao cargar informações do usuário:', error);
+      
+      setDadosModalProntos(null);
     }
-  };
+  }, [dadosModalProntos, userData]);
 
   const closeInfoModal = () => {
     setIsInfoModalOpen(false);
@@ -365,7 +371,6 @@ const TelaMenu: React.FC = () => {
         <div className='right-header'>
           <button className="user-button" onClick={() => navigate('/NotificacoesPage')}>
             NOTIFICAÇÕES
-            <NotificacaoBadge />
           </button>
           <button className="user-button">
             MENSAGENS
@@ -382,7 +387,6 @@ const TelaMenu: React.FC = () => {
       {isProfileModalOpen && (
         <div className="profile-modal-overlay" onClick={closeProfileModal}>
           <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
-            {/* Modal de perfil (inalterado) */}
             <div className="profile-header">
               <div className="profile-avatar-wrapper">
                 <label htmlFor="avatar-upload" className="avatar-label">
@@ -479,6 +483,7 @@ const TelaMenu: React.FC = () => {
               <div className="field-group">
                 <label>Instituição Atual</label>
                 <Autocomplete
+                  getOptionKey={(option) => option.id}
                   size='small'
                   options={instituicoes}
                   getOptionLabel={(option) => option.nome}
@@ -500,12 +505,12 @@ const TelaMenu: React.FC = () => {
                 />
               </div>
 
-              {/* ---- BLOCO JSX DE ITINERÁRIO ADICIONADO ---- */}
               <div className="field-group">
                 <label>Instituição Destino</label>
-                {instituicoesDestino.map((instId, index) => (
+                {instituicaoDestino.map((instId, index) => (
                   <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                     <Autocomplete
+                      getOptionKey={(option) => option.id}
                       size='small'
                       options={instituicoes}
                       getOptionLabel={(option) => option.nome}
@@ -548,7 +553,6 @@ const TelaMenu: React.FC = () => {
                   </div>
                 ))}
               </div>
-              {/* ---- FIM DO BLOCO JSX DE ITINERÁRIO ---- */}
 
               <div className="field-group checkbox-group">
                 <label className='checkbox-label'>
