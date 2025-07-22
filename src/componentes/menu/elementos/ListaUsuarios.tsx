@@ -1,30 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, TextField, Button, Typography } from "@mui/material";
+import { Box, TextField, Button, Typography, Avatar } from "@mui/material";
 import { getUsuarios, Usuario } from '../../../api/usuarioService.ts';
+import defaultAvatarImg from '../img/defaultAvatar.jpg';
 
 interface ListaUsuariosProps {
   usuarioLogadoId: number;
 }
 
-// Definição das colunas para o DataGrid
+// Importe a imagem padrão ou defina o caminho para ela
+const DEFAULT_AVATAR = defaultAvatarImg;
+
 const columns: GridColDef<Usuario>[] = [
+  {
+    field: 'avatar',
+    headerName: 'Foto',
+    flex: 0.5,
+    sortable: false,
+    filterable: false,
+    renderCell: (params: GridRenderCellParams<Usuario>) => (
+      <Avatar
+        src={params.row.fotoUrl || DEFAULT_AVATAR}
+        alt={params.row.nome}
+        sx={{ width: 40, height: 40 }}
+      />
+    )
+  },
   { 
     field: 'nome', 
     headerName: 'Nome', 
     flex: 1 
-  },
-  { 
-    field: 'email',
-    headerName: 'Email', 
-    flex: 1 
-  },
-  {
-    field: 'cargo',
-    headerName: 'Cargo',
-    flex: 1,
-    valueGetter: (value) => value || 'Não informado',
   },
   {
     field: 'acoes',
@@ -38,8 +44,7 @@ const columns: GridColDef<Usuario>[] = [
         variant="outlined"
         size="small" 
       >
-        Solicitar
-        Permuta
+        Solicitar Permuta
       </Button>
     )
   }
@@ -57,7 +62,12 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
       try {
         setLoading(true);
         const dados = await getUsuarios();
-        setUsuarios(dados);
+        // Adiciona a URL da foto para cada usuário
+        const usuariosComFoto = dados.map(usuario => ({
+          ...usuario,
+          fotoUrl: usuario.fotoUrl || DEFAULT_AVATAR
+        }));
+        setUsuarios(usuariosComFoto);
         setError(null);
       } catch (err: any) {
         console.error("Erro ao carregar usuários:", err);
@@ -76,22 +86,20 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
   }, [navigate]);
 
   const dadosFiltrados = usuarios
-    .filter(usuario => usuario.id !== usuarioLogadoId) // 👈 remove o logado
+    .filter(usuario => usuario.id !== usuarioLogadoId)
     .filter(usuario =>
-      usuario.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      usuario.email.toLowerCase().includes(busca.toLowerCase()) ||
-      (usuario.cargo && usuario.cargo.toLowerCase().includes(busca.toLowerCase()))
+      usuario.nome.toLowerCase().includes(busca.toLowerCase())
     );
 
   return (
     <Box sx={{ p: 3, width: '100%' }}>
       <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
-        .
+        Usuários Disponíveis para Permuta
       </Typography>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <TextField
-          label="Buscar por nome, email ou cargo"
+          label="Buscar por nome"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           variant="outlined"

@@ -6,6 +6,7 @@ export interface Usuario {
   nome: string;
   email: string;
   cargo: string;
+  fotoUrl?: string;
 }
 
 const API_URL = 'http://localhost:3000/usuarios';

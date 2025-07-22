@@ -4,7 +4,7 @@ import axios from 'axios';
 import './telaMenu.css';
 import { Autocomplete, TextField } from "@mui/material";
 import '@mui/material/styles';
-import defaultAvatarImg from './img/defaultAvatar.jpg';
+import defaultAvatarImg from '../../componentes/menu/img/defaultAvatar.jpg';
 import ListaUsuarios from '../menu/elementos/ListaUsuarios.tsx';
 
 
