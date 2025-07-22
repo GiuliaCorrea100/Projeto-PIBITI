@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, TextField, Button, Typography, Avatar } from "@mui/material";
+import { Box, TextField, Button, Typography, Avatar, Paper } from "@mui/material";
 import { getUsuarios, Usuario } from '../../../api/usuarioService.ts';
 import defaultAvatarImg from '../img/defaultAvatar.jpg';
 
@@ -9,7 +9,6 @@ interface ListaUsuariosProps {
   usuarioLogadoId: number;
 }
 
-// Importe a imagem padrão ou defina o caminho para ela
 const DEFAULT_AVATAR = defaultAvatarImg;
 
 const columns: GridColDef<Usuario>[] = [
@@ -27,10 +26,20 @@ const columns: GridColDef<Usuario>[] = [
       />
     )
   },
-  { 
-    field: 'nome', 
-    headerName: 'Nome', 
-    flex: 1 
+  {
+    field: 'nome',
+    headerName: 'Nome',
+    flex: 1
+  },
+  {
+    field: 'instituicaoAtual',
+    headerName: 'Instituição Atual',
+    flex: 1,
+    renderCell: (params: GridRenderCellParams<Usuario>) => (
+      <Typography>
+        {params.row.instituicao?.nome || 'Não informado'}
+      </Typography>
+    )
   },
   {
     field: 'acoes',
@@ -42,9 +51,13 @@ const columns: GridColDef<Usuario>[] = [
         component={Link}
         to={`/usuarios/${params.row.id}`}
         variant="outlined"
-        size="small" 
+        size="small"
+        sx={{
+          borderRadius: '20px',
+          textTransform: 'none'
+        }}
       >
-        Solicitar Permuta
+        Mandar Solicitação
       </Button>
     )
   }
@@ -62,7 +75,7 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
       try {
         setLoading(true);
         const dados = await getUsuarios();
-        // Adiciona a URL da foto para cada usuário
+        console.log('Dados recebidos:', dados);
         const usuariosComFoto = dados.map(usuario => ({
           ...usuario,
           fotoUrl: usuario.fotoUrl || DEFAULT_AVATAR
@@ -81,63 +94,105 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
         setLoading(false);
       }
     };
-    
+
     carregarUsuarios();
   }, [navigate]);
 
   const dadosFiltrados = usuarios
     .filter(usuario => usuario.id !== usuarioLogadoId)
     .filter(usuario =>
-      usuario.nome.toLowerCase().includes(busca.toLowerCase())
+      usuario.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      (usuario.instituicao?.nome && usuario.instituicao.nome.toLowerCase().includes(busca.toLowerCase()))
     );
 
   return (
-    <Box sx={{ p: 3, width: '100%' }}>
-      <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
-        Usuários Disponíveis para Permuta
-      </Typography>
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <TextField
-          label="Buscar por nome"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          variant="outlined"
-          sx={{ width: '50%' }}
-          size="small"
-        />
-      </Box>
-
-      {error && (
-        <Typography color="error" sx={{ mb: 2 }}>
-          {error}
+    <Box sx={{
+      p: 3,
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }}>
+      <Paper elevation={3} sx={{
+        p: 4,
+        width: '90%',
+        maxWidth: '1200px',
+        borderRadius: '12px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}>
+        <Typography variant="h4" component="h1" sx={{
+          mb: 3,
+          textAlign: 'center',
+          fontWeight: 'bold'
+        }}>
+          Usuários Disponíveis para Permuta
         </Typography>
-      )}
 
-      <Box sx={{ height: 600, width: '100%' }}>
-        <DataGrid
-          rows={dadosFiltrados}
-          columns={columns}
-          loading={loading}
-          getRowId={(row) => row.id}
-          autoHeight
-          initialState={{
-            pagination: {
-              paginationModel: { pageSize: 5, page: 0 },
-            },
-          }}
-          pageSizeOptions={[5, 10, 20, 50]}
-          sx={{
-            '& .MuiDataGrid-cell': {
-              display: 'flex',
-              alignItems: 'center',
-            },
-            '& .MuiDataGrid-columnHeaderTitle': {
-              fontWeight: 'bold',
-            }
-          }}
-        />
-      </Box>
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          mb: 3,
+          width: '100%',
+          maxWidth: '600px'
+        }}>
+          <TextField
+            label="Buscar por nome ou instituição"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            variant="outlined"
+            fullWidth
+            size="small"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '20px',
+              }
+            }}
+          />
+        </Box>
+
+        {error && (
+          <Typography color="error" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+        )}
+
+        <Box sx={{
+          height: 600,
+          width: '100%',
+          '& .MuiDataGrid-root': {
+            borderRadius: '12px',
+          }
+        }}>
+          <DataGrid
+            rows={dadosFiltrados}
+            columns={columns}
+            loading={loading}
+            getRowId={(row) => row.id}
+            autoHeight
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 5, page: 0 },
+              },
+            }}
+            pageSizeOptions={[5, 10, 20, 50]}
+            sx={{
+              '& .MuiDataGrid-cell': {
+                display: 'flex',
+                alignItems: 'center',
+              },
+              '& .MuiDataGrid-columnHeaderTitle': {
+                fontWeight: 'bold',
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                borderRadius: '12px 12px 0 0',
+              }
+            }}
+          />
+        </Box>
+      </Paper>
     </Box>
   );
 }
