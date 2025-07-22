@@ -11,7 +11,16 @@ interface ListaUsuariosProps {
 
 const DEFAULT_AVATAR = defaultAvatarImg;
 
-const columns: GridColDef<Usuario>[] = [
+// MODIFICAÇÃO 1: Nova função para gerar nomes no formato "usuarioXXX"
+// Usa o ID do usuário como base para o número, garantindo consistência
+const generateUsuarioName = (userId: number): string => {
+  // Gera um número entre 100 e 999 baseado no ID do usuário
+  const userNumber = 100 + (userId % 900); // Garante número de 3 dígitos
+  return `usuario${userNumber}`;
+};
+
+// MODIFICAÇÃO 2: Transformamos as colunas em uma função que recebe o ID do usuário logado
+const getColumns = (usuarioLogadoId: number): GridColDef<Usuario>[] => [
   {
     field: 'avatar',
     headerName: 'Foto',
@@ -29,7 +38,16 @@ const columns: GridColDef<Usuario>[] = [
   {
     field: 'nome',
     headerName: 'Nome',
-    flex: 1
+    flex: 1,
+    // MODIFICAÇÃO 3: Renderização condicional do nome
+    // Mostra o nome real apenas para o usuário logado, "usuarioXXX" para os outros
+    renderCell: (params: GridRenderCellParams<Usuario>) => (
+      <Typography>
+        {params.row.id === usuarioLogadoId 
+          ? params.row.nome 
+          : generateUsuarioName(params.row.id)}
+      </Typography>
+    )
   },
   {
     field: 'instituicaoAtual',
@@ -70,6 +88,9 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // MODIFICAÇÃO 4: Usamos a função getColumns passando o usuarioLogadoId
+  const columns = getColumns(usuarioLogadoId);
+
   useEffect(() => {
     const carregarUsuarios = async () => {
       try {
@@ -98,6 +119,7 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
     carregarUsuarios();
   }, [navigate]);
 
+  // MODIFICAÇÃO 5: Mantemos a filtragem original, mas agora os nomes serão exibidos conforme a renderização personalizada
   const dadosFiltrados = usuarios
     .filter(usuario => usuario.id !== usuarioLogadoId)
     .filter(usuario =>
