@@ -54,6 +54,8 @@ const TelaMenu: React.FC = () => {
   const [instituicoes, setInstituicoes] = useState<Instituicao[]>([]);
   const [dadosModalProntos, setDadosModalProntos] = useState<Instituicao[] | null>(null);
   const [instituicaoDestino, setInstituicaoDestino] = useState<(number | null)[]>([null]);
+  const [imageChanged, setImageChanged] = useState(false);
+  const [novaSenha, setNovaSenha] = useState('');
 
   // MODIFICAÇÃO: Adicionado estado para controlar a exibição das solicitações
   const [showSolicitacoes, setShowSolicitacoes] = useState(false);
@@ -98,6 +100,7 @@ const TelaMenu: React.FC = () => {
 
       const reader = new FileReader();
       reader.onloadend = () => {
+        setImageChanged(true);
         setProfileImage(reader.result as string);
       };
       reader.readAsDataURL(file);
@@ -166,10 +169,14 @@ const TelaMenu: React.FC = () => {
   // Funções de controle dos modais
   const toggleProfileModal = () => {
     setIsProfileModalOpen(!isProfileModalOpen);
-    if (!isProfileModalOpen) fetchUserData(); 
+    if (!isProfileModalOpen) {
+      fetchUserData();
+      setImageChanged(false);
+    } 
   };
 
   const closeProfileModal = () => {
+    setImageChanged(false)
     setIsProfileModalOpen(false);
     if (originalData) setUserData({...originalData});
   };
@@ -224,16 +231,16 @@ const TelaMenu: React.FC = () => {
     if (userData.nome !== originalData.nome) updateData.nome = userData.nome;
     if (userData.email !== originalData.email) updateData.email = userData.email;
     
-    if (userData.senha && userData.senha.trim() !== '') {
-      if (userData.senha.length < 8) {
+    if (novaSenha.trim() !== '') {
+      if (novaSenha.length < 8) {
         setAlertMessage('A senha deve conter pelo menos 8 caracteres');
         setTimeout(() => setAlertMessage(null), 1500);
         return;
       }
-      updateData.senha = userData.senha;
+      updateData.senha = novaSenha;
     }
 
-    if (Object.keys(updateData).length === 0) {
+    if (Object.keys(updateData).length === 0 && !imageChanged) {
       setAlertMessage('Nenhuma alteração foi feita');
       setTimeout(() => setAlertMessage(null), 1500);
       return;
@@ -347,7 +354,12 @@ const TelaMenu: React.FC = () => {
               </div>
               <div className="field-group">
                 <label>Senha</label>
-                <input type="password" placeholder="Nova senha" value={userData?.senha || ''} onChange={(e) => setUserData(prev => prev ? { ...prev, senha: e.target.value } : null)} />
+                <input 
+                  type="password" 
+                  placeholder="Nova senha" 
+                  value={novaSenha} 
+                  onChange={(e) => setNovaSenha(e.target.value)} 
+                />
               </div>
             </div>
             <div className="profile-actions">
