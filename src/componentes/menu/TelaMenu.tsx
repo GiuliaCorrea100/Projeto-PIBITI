@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './telaMenu.css';
 import { Autocomplete, TextField } from "@mui/material";
+
+import './telaMenu.css';
 import defaultAvatarImg from '../../componentes/menu/img/defaultAvatar.jpg';
 import ListaUsuarios from '../menu/elementos/ListaUsuarios.tsx';
-import ListaSolicitacoes from '../menu/elementos/ListaSolicitacoes.tsx'; 
+import ListaSolicitacoes from '../menu/elementos/ListaSolicitacoes.tsx';
 import EntrarEmContato from '../menu/elementos/EntrarEmContato.tsx';
 
 const DEFAULT_AVATAR = defaultAvatarImg;
 
-// Interfaces de tipo para os dados
 interface InstituicaoDestinoData {
   id: number;
   usuarioId: number;
@@ -37,7 +37,6 @@ interface Instituicao {
 const TelaMenu: React.FC = () => {
   const navigate = useNavigate();
 
-  // Estados do componente
   const [userName, setUserName] = useState<string>('usuário');
   const [loading, setLoading] = useState<boolean>(true);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -46,7 +45,6 @@ const TelaMenu: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string>(DEFAULT_AVATAR);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
-
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [cargo, setCargo] = useState('');
   const [instituicaoId, setinstituicaoId] = useState<number | ''>('');
@@ -57,11 +55,8 @@ const TelaMenu: React.FC = () => {
   const [imageChanged, setImageChanged] = useState(false);
   const [novaSenha, setNovaSenha] = useState('');
   const [showContatos, setShowContatos] = useState(false);
-
-  // MODIFICAÇÃO: Adicionado estado para controlar a exibição das solicitações
   const [showSolicitacoes, setShowSolicitacoes] = useState(false);
 
-  // Funções para gerenciar instituições de destino
   const handleInstituicaoDestinoChange = (index: number, newValue: Instituicao | null) => {
     const novas = [...instituicaoDestino];
     novas[index] = newValue ? newValue.id : null;
@@ -79,7 +74,6 @@ const TelaMenu: React.FC = () => {
     }
   };
 
-  // Funções de manipulação de imagem
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     e.currentTarget.src = DEFAULT_AVATAR;
   };
@@ -110,7 +104,6 @@ const TelaMenu: React.FC = () => {
     }
   };
 
-  // Busca de dados do usuário
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -118,11 +111,11 @@ const TelaMenu: React.FC = () => {
         setLoading(false);
         return;
       }
-      
+
       const response = await axios.get<UserData>('http://localhost:3000/autorizacoes/me', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       setUserName(response.data.nome);
       setUserData(response.data);
       setOriginalData({ ...response.data });
@@ -132,7 +125,7 @@ const TelaMenu: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'
         });
-        
+
         if (fotoResponse.data.size > 0) {
           if (objectUrl) URL.revokeObjectURL(objectUrl);
           const newImageUrl = URL.createObjectURL(fotoResponse.data);
@@ -142,10 +135,8 @@ const TelaMenu: React.FC = () => {
           setProfileImage(DEFAULT_AVATAR);
         }
       } catch (fotoError) {
-        console.warn('Foto do usuário não encontrada, usando avatar padrão.');
         setProfileImage(DEFAULT_AVATAR);
       }
-
     } catch (error) {
       console.error('Erro ao buscar dados do usuário:', error);
       setUserName('usuário');
@@ -154,11 +145,10 @@ const TelaMenu: React.FC = () => {
     }
   };
 
-  // Efeitos para carregar dados e limpar memória
   useEffect(() => {
     fetchUserData();
-  }, []); 
-  
+  }, []);
+
   useEffect(() => {
     return () => {
       if (objectUrl) {
@@ -166,20 +156,39 @@ const TelaMenu: React.FC = () => {
       }
     };
   }, [objectUrl]);
+  
+  useEffect(() => {
+    if (dadosModalProntos && userData) {
+      setInstituicoes(dadosModalProntos);
+      setCargo(userData.cargo || '');
+      setinstituicaoId(userData.instituicaoId || '');
+      setAceitaPerto(userData.aceitaPerto || false);
+      
+      const destinosSalvos = userData.instituicaoDestino;
+      
+      if (destinosSalvos && destinosSalvos.length > 0) {
+        setInstituicaoDestino(destinosSalvos.map(d => d.instituicaoId));
+      } else {
+        setInstituicaoDestino([null]);
+      }
+      
+      setIsInfoModalOpen(true);
+      setDadosModalProntos(null);
+    }
+  }, [dadosModalProntos, userData]);
 
-  // Funções de controle dos modais
   const toggleProfileModal = () => {
     setIsProfileModalOpen(!isProfileModalOpen);
     if (!isProfileModalOpen) {
       fetchUserData();
       setImageChanged(false);
-    } 
+    }
   };
 
   const closeProfileModal = () => {
-    setImageChanged(false)
+    setImageChanged(false);
     setIsProfileModalOpen(false);
-    if (originalData) setUserData({...originalData});
+    if (originalData) setUserData({ ...originalData });
   };
 
   const closeInfoModal = () => {
@@ -203,35 +212,13 @@ const TelaMenu: React.FC = () => {
     }
   };
 
-  // Efeito para popular o modal de informações após buscar os dados
-  useEffect(() => {
-    if (dadosModalProntos && userData) {
-      setInstituicoes(dadosModalProntos);
-      setCargo(userData.cargo || '');
-      setinstituicaoId(userData.instituicaoId || '');
-      setAceitaPerto(userData.aceitaPerto || false);
-
-      const destinosSalvos = userData.instituicaoDestino;
-
-      if (destinosSalvos && destinosSalvos.length > 0) {
-        setInstituicaoDestino(destinosSalvos.map(d => d.instituicaoId));
-      } else {
-        setInstituicaoDestino([null]);
-      }
-      
-      setIsInfoModalOpen(true);
-      setDadosModalProntos(null);
-    }
-  }, [dadosModalProntos, userData]);
-
-  // Funções para salvar alterações
   const handleSaveProfile = async () => {
     if (!userData?.id || !originalData) return;
-    
+
     const updateData: Partial<UserData> = {};
     if (userData.nome !== originalData.nome) updateData.nome = userData.nome;
     if (userData.email !== originalData.email) updateData.email = userData.email;
-    
+
     if (novaSenha.trim() !== '') {
       if (novaSenha.length < 8) {
         setAlertMessage('A senha deve conter pelo menos 8 caracteres');
@@ -251,8 +238,8 @@ const TelaMenu: React.FC = () => {
       await axios.put(`http://localhost:3000/usuarios/${userData.id}`, updateData, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      
-      await fetchUserData(); // Re-busca os dados para garantir consistência
+
+      await fetchUserData();
       setAlertMessage('Alterações salvas com sucesso!');
       
       setTimeout(() => {
@@ -260,7 +247,6 @@ const TelaMenu: React.FC = () => {
         closeProfileModal();
       }, 1500);
     } catch (error: any) {
-      console.error('Erro ao salvar alterações:', error);
       const errorMessage = error.response?.data?.message || 'Erro ao salvar alterações. O e-mail pode já estar em uso.';
       setAlertMessage(errorMessage);
     }
@@ -273,15 +259,15 @@ const TelaMenu: React.FC = () => {
       cargo,
       instituicaoId: instituicaoId === '' ? null : Number(instituicaoId),
       aceitaPerto,
-      instituicaoDestino: instituicaoDestino.filter(id => id !== null) 
+      instituicaoDestino: instituicaoDestino.filter(id => id !== null)
     };
 
     try {
       await axios.put(`http://localhost:3000/usuarios/${userData.id}`, dataToSave, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      
-      await fetchUserData(); // Re-busca os dados para garantir consistência
+
+      await fetchUserData();
       setAlertMessage('Informações salvas com sucesso!');
       
       setTimeout(() => {
@@ -294,7 +280,6 @@ const TelaMenu: React.FC = () => {
     }
   };
 
-  // Função de logout
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
@@ -304,10 +289,10 @@ const TelaMenu: React.FC = () => {
     <div className="menu-container">
       <header className="menu-header">
         <div className='left-header'>
-            <button className="user-button" onClick={toggleProfileModal}>
-            <img 
-              src={profileImage} 
-              alt="Perfil" 
+          <button className="user-button" onClick={toggleProfileModal}>
+            <img
+              src={profileImage}
+              alt="Perfil"
               className="header-profile-avatar"
               onError={handleImageError}
             />
@@ -332,27 +317,26 @@ const TelaMenu: React.FC = () => {
             onClick={() => {
               setShowContatos(prev => {
                 const newValue = !prev;
-                if (newValue) setShowSolicitacoes(false); // Fecha o outro
+                if (newValue) setShowSolicitacoes(false);
                 return newValue;
               });
             }}
           >
             {showContatos ? 'VOLTAR' : 'ENTRAR EM CONTATO'}
           </button>
-          <button 
-            className="user-button" 
+          <button
+            className="user-button"
             onClick={openInfoModal}>
-              INFORMAÇÕES
+            INFORMAÇÕES
           </button>
-          <button 
-            className='user-button' 
+          <button
+            className='user-button'
             onClick={handleLogout}>
-              SAIR
+            SAIR
           </button>
         </div>
       </header>
 
-      {/* Modal de Perfil */}
       {isProfileModalOpen && (
         <div className="profile-modal-overlay" onClick={closeProfileModal}>
           <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -380,11 +364,11 @@ const TelaMenu: React.FC = () => {
               </div>
               <div className="field-group">
                 <label>Senha</label>
-                <input 
-                  type="password" 
-                  placeholder="Nova senha" 
-                  value={novaSenha} 
-                  onChange={(e) => setNovaSenha(e.target.value)} 
+                <input
+                  type="password"
+                  placeholder="Nova senha"
+                  value={novaSenha}
+                  onChange={(e) => setNovaSenha(e.target.value)}
                 />
               </div>
             </div>
@@ -398,7 +382,6 @@ const TelaMenu: React.FC = () => {
         </div>
       )}
 
-      {/* Modal de Informações */}
       {isInfoModalOpen && (
         <div className="profile-modal-overlay" onClick={closeInfoModal}>
           <div className="profile-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -412,18 +395,18 @@ const TelaMenu: React.FC = () => {
 
               <div className="field-group autocomplete-field">
                 <label>Instituição Atual</label>
-                <Autocomplete 
+                <Autocomplete
                   getOptionKey={(option) => option.id}
-                  size="small" options={instituicoes} 
-                  getOptionLabel={(option) => option.nome} 
-                  value={instituicoes.find(inst => inst.id === instituicaoId) || null} 
-                  onChange={(event, newValue) => setinstituicaoId(newValue?.id || '')} 
-                  isOptionEqualToValue={(option, value) => option.id === value.id} 
-                  renderInput={(params) => <TextField {...params} 
-                  variant="outlined" placeholder="Digite para buscar..." fullWidth />} 
+                  size="small" options={instituicoes}
+                  getOptionLabel={(option) => option.nome}
+                  value={instituicoes.find(inst => inst.id === instituicaoId) || null}
+                  onChange={(event, newValue) => setinstituicaoId(newValue?.id || '')}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  renderInput={(params) => <TextField {...params}
+                    variant="outlined" placeholder="Digite para buscar..." fullWidth />}
                   noOptionsText="Nenhuma instituição encontrada" />
               </div>
-              
+
               <div className="field-group">
                 <label>Instituições de Interesse</label>
                 {instituicaoDestino.map((instId, index) => (
@@ -467,7 +450,6 @@ const TelaMenu: React.FC = () => {
         </div>
       )}
 
-      {/* Alerta customizado */}
       {alertMessage && (
         <div className="custom-alert-overlay">
           <div className="custom-alert-box">
@@ -477,7 +459,6 @@ const TelaMenu: React.FC = () => {
         </div>
       )}
 
-      {/* MODIFICAÇÃO: Seção main renderiza condicionalmente a lista de usuários ou a lista de solicitações */}
       <main>
         {showSolicitacoes ? (
           <ListaSolicitacoes usuarioLogadoId={userData?.id || 0} />
