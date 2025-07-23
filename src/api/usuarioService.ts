@@ -1,4 +1,3 @@
-// src/api/usuarioService.ts
 import axios from 'axios';
 
 export interface Instituicao {
