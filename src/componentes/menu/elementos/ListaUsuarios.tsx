@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Box, TextField, Button, Typography, Avatar, Paper, Modal, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Typography, Avatar, Paper, Modal, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
 import { getUsuarios, Usuario } from '../../../api/usuarioService.ts';
 import defaultAvatarImg from '../img/defaultAvatar.jpg';
+import axios from 'axios'; // Importação adicionada
 
 interface ListaUsuariosProps {
   usuarioLogadoId: number;
@@ -16,7 +17,6 @@ const generateUsuarioName = (userId: number): string => {
   return `Usuario${userNumber}`;
 };
 
-// MODIFICAÇÃO: Adicionamos a propriedade onSolicitarClick à interface das colunas
 const getColumns = (usuarioLogadoId: number, onSolicitarClick: (usuario: Usuario) => void): GridColDef<Usuario>[] => [
   {
     field: 'avatar',
@@ -82,32 +82,47 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   
-  // Estado para controlar o modal de confirmação
   const [openModal, setOpenModal] = useState(false);
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(null);
 
-  // Função para lidar com o clique no botão de solicitação
+  // MODIFICAÇÃO: Adicionado estado para a mensagem de alerta
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
   const handleSolicitarClick = (usuario: Usuario) => {
     setUsuarioSelecionado(usuario);
     setOpenModal(true);
   };
 
-  // Função para confirmar a solicitação
-  const handleConfirmarSolicitacao = () => {
-    setOpenModal(false);
-    // Aqui você pode adicionar a lógica para enviar a solicitação de permuta
-    console.log('Solicitação enviada para:', usuarioSelecionado);
-    // Depois de enviar, você pode navegar para a página do usuário ou mostrar uma mensagem
-    // navigate(`/usuarios/${usuarioSelecionado?.id}`);
+  // MODIFICAÇÃO: Função handleConfirmarSolicitacao atualizada
+  const handleConfirmarSolicitacao = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        'http://localhost:3000/solicitacoes',
+        {
+          usuarioId_alvo: usuarioSelecionado?.id,
+          usuarioId_solicitante: usuarioLogadoId
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      setOpenModal(false);
+      setAlertMessage('Solicitação enviada com sucesso!');
+      setTimeout(() => setAlertMessage(null), 2000);
+    } catch (error) {
+      console.error('Erro ao enviar solicitação:', error);
+      setAlertMessage('Erro ao enviar solicitação. Tente novamente.');
+      setTimeout(() => setAlertMessage(null), 2000);
+    }
   };
 
-  // Função para cancelar a solicitação
   const handleCancelarSolicitacao = () => {
     setOpenModal(false);
     setUsuarioSelecionado(null);
   };
 
-  // MODIFICAÇÃO: Passamos a função handleSolicitarClick para as colunas
   const columns = getColumns(usuarioLogadoId, handleSolicitarClick);
 
   useEffect(() => {
@@ -234,7 +249,7 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
         </Box>
       </Paper>
 
-      {/* Modal de Confirmação */}
+      {/* Modal de Confirmacao */}
       <Dialog
         open={openModal}
         onClose={handleCancelarSolicitacao}
@@ -242,17 +257,15 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          Confirmar se deseja fazer permuta com:
+          Confirmar se deseja mandar solicitação para:
         </DialogTitle>
         <DialogContent>
-          <DialogContent>
           <Typography variant="body1" sx={{ textAlign: 'center', fontWeight: 'bold', mt: 1 }}>
             {generateUsuarioName(usuarioSelecionado?.id || 0)}
           </Typography>
           <Typography variant="body1" sx={{ textAlign: 'center' }}>
             {usuarioSelecionado?.instituicao?.nome || 'Instituição não informada'}
           </Typography>
-        </DialogContent>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelarSolicitacao} color="primary">
@@ -263,6 +276,16 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
           </Button>
         </DialogActions>
       </Dialog>
+      
+      {/* MODIFICAÇÃO: Adicionado o Dialog de Alerta */}
+      {alertMessage && (
+        <Dialog open={!!alertMessage} onClose={() => setAlertMessage(null)}>
+          <DialogTitle>{alertMessage}</DialogTitle>
+          <DialogActions>
+            <Button onClick={() => setAlertMessage(null)}>OK</Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   );
 }
