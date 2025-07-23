@@ -46,7 +46,7 @@ const getColumns = (usuarioLogadoId: number, onSolicitarClick: (usuario: Usuario
   },
   {
     field: 'instituicaoAtual',
-    headerName: 'Instituição Atual',
+    headerName: 'Instituição',
     flex: 1,
     renderCell: (params: GridRenderCellParams<Usuario>) => (
       <Typography>

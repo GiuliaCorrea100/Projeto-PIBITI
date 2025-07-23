@@ -28,6 +28,8 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [solicitacaoSelecionada, setSolicitacaoSelecionada] = useState<Solicitacao | null>(null);
+  const [fotosUsuarios, setFotosUsuarios] = useState<{ [id: number]: string }>({});
+
 
   useEffect(() => {
     const fetchSolicitacoes = async () => {
@@ -36,7 +38,13 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
         const response = await axios.get(`http://localhost:3000/solicitacoes/${usuarioLogadoId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setSolicitacoes(response.data);
+        const solicitacoesRecebidas = response.data;
+        setSolicitacoes(solicitacoesRecebidas);
+
+        // Buscar fotos dos solicitantes
+        solicitacoesRecebidas.forEach(s => {
+          carregarFotoUsuario(s.usuarioSolicitante.id);
+        });
       } catch (err) {
         console.error('Erro ao buscar solicitações:', err);
         setError('Não foi possível carregar as solicitações.');
@@ -88,6 +96,27 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
     }
   };
 
+  const carregarFotoUsuario = async (usuarioId: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`http://localhost:3000/usuarios/${usuarioId}/foto`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+
+      const blob = response.data;
+      if (blob.size > 0) {
+        const imageUrl = URL.createObjectURL(blob);
+        setFotosUsuarios(prev => ({ ...prev, [usuarioId]: imageUrl }));
+      } else {
+        setFotosUsuarios(prev => ({ ...prev, [usuarioId]: DEFAULT_AVATAR }));
+      }
+    } catch (error) {
+      console.warn(`Erro ao carregar imagem do usuário ${usuarioId}`, error);
+      setFotosUsuarios(prev => ({ ...prev, [usuarioId]: DEFAULT_AVATAR }));
+    }
+  };
+
   return (
     <Box sx={{
       p: 3,
@@ -117,7 +146,7 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
         {error && <Typography color="error">{error}</Typography>}
 
         {!loading && !error && solicitacoes.length === 0 && (
-          <Typography>Nenhuma solicitação pendente</Typography>
+          <Typography>Nenhuma solicitação recebida</Typography>
         )}
 
         {!loading && !error && solicitacoes.length > 0 && (
@@ -132,7 +161,7 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Avatar
-                    src={solicitacao.usuarioSolicitante.fotoUrl || DEFAULT_AVATAR}
+                    src={fotosUsuarios[solicitacao.usuarioSolicitante.id] || DEFAULT_AVATAR}
                     alt={solicitacao.usuarioSolicitante.nome}
                     sx={{ width: 56, height: 56, mr: 2 }}
                   />

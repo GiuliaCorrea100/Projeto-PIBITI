@@ -5,8 +5,8 @@ import './telaMenu.css';
 import { Autocomplete, TextField } from "@mui/material";
 import defaultAvatarImg from '../../componentes/menu/img/defaultAvatar.jpg';
 import ListaUsuarios from '../menu/elementos/ListaUsuarios.tsx';
-// Importação adicionada para o novo componente
 import ListaSolicitacoes from '../menu/elementos/ListaSolicitacoes.tsx'; 
+import EntrarEmContato from '../menu/elementos/EntrarEmContato.tsx';
 
 const DEFAULT_AVATAR = defaultAvatarImg;
 
@@ -56,6 +56,7 @@ const TelaMenu: React.FC = () => {
   const [instituicaoDestino, setInstituicaoDestino] = useState<(number | null)[]>([null]);
   const [imageChanged, setImageChanged] = useState(false);
   const [novaSenha, setNovaSenha] = useState('');
+  const [showContatos, setShowContatos] = useState(false);
 
   // MODIFICAÇÃO: Adicionado estado para controlar a exibição das solicitações
   const [showSolicitacoes, setShowSolicitacoes] = useState(false);
@@ -314,15 +315,40 @@ const TelaMenu: React.FC = () => {
           </button>
         </div>
         <div className='right-header'>
-          {/* MODIFICAÇÃO: Atualizado o onClick do botão SOLICITAÇÕES */}
           <button
             className="user-button"
-            onClick={() => setShowSolicitacoes(!showSolicitacoes)}
+            onClick={() => {
+              setShowSolicitacoes(prev => {
+                const newValue = !prev;
+                if (newValue) setShowContatos(false);
+                return newValue;
+              });
+            }}
           >
-            SOLICITAÇÕES
+            {showSolicitacoes ? 'VOLTAR' : 'SOLICITAÇÕES'}
           </button>
-          <button className="user-button" onClick={openInfoModal}>INFORMAÇÕES</button>
-          <button className='user-button' onClick={handleLogout}>SAIR</button>
+          <button
+            className="user-button"
+            onClick={() => {
+              setShowContatos(prev => {
+                const newValue = !prev;
+                if (newValue) setShowSolicitacoes(false); // Fecha o outro
+                return newValue;
+              });
+            }}
+          >
+            {showContatos ? 'VOLTAR' : 'ENTRAR EM CONTATO'}
+          </button>
+          <button 
+            className="user-button" 
+            onClick={openInfoModal}>
+              INFORMAÇÕES
+          </button>
+          <button 
+            className='user-button' 
+            onClick={handleLogout}>
+              SAIR
+          </button>
         </div>
       </header>
 
@@ -455,6 +481,8 @@ const TelaMenu: React.FC = () => {
       <main>
         {showSolicitacoes ? (
           <ListaSolicitacoes usuarioLogadoId={userData?.id || 0} />
+        ) : showContatos ? (
+          userData && <EntrarEmContato usuarioLogadoId={userData.id} />
         ) : (
           userData && <ListaUsuarios usuarioLogadoId={userData.id} />
         )}
