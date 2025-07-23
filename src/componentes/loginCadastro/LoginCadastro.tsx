@@ -79,8 +79,8 @@ function LoginCadastro() {
             valid = false;
         }
 
-        if (formData.senha.length < 6) {
-            newErrors.senha = "A senha deve ter pelo menos 6 caracteres.";
+        if (formData.senha.length < 8) {
+            newErrors.senha = "A senha deve ter pelo menos 8 caracteres.";
             valid = false;
         }
 
@@ -100,8 +100,8 @@ function LoginCadastro() {
         try {
             if (isLogin) {
                 const response = await axios.post("http://localhost:3000/autorizacoes/login", {
-                    email: formData.email,
-                    senha: formData.senha,
+                    email: formData.email.trim(),
+                    senha: formData.senha.trim(),
                 });
 
                 if (response.data && response.data.access_token) {
