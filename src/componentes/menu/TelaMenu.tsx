@@ -211,6 +211,7 @@ const TelaMenu: React.FC = () => {
       console.error('Erro ao buscar instituições:', error);
     }
   };
+  //..
 
   const handleSaveProfile = async () => {
     if (!userData?.id || !originalData) return;
