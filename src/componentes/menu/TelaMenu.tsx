@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Autocomplete, TextField } from "@mui/material";
+import InputMask from 'react-input-mask';
 
 import './telaMenu.css';
 import defaultAvatarImg from '../../componentes/menu/img/defaultAvatar.jpg';
@@ -21,6 +22,7 @@ interface UserData {
   id: number;
   nome: string;
   email: string;
+  telefone?: string; // CAMPO ADICIONADO
   senha?: string;
   cargo?: string;
   instituicaoId?: number;
@@ -218,6 +220,7 @@ const TelaMenu: React.FC = () => {
     const updateData: Partial<UserData> = {};
     if (userData.nome !== originalData.nome) updateData.nome = userData.nome;
     if (userData.email !== originalData.email) updateData.email = userData.email;
+    if (userData.telefone !== originalData.telefone) updateData.telefone = userData.telefone;
 
     if (novaSenha.trim() !== '') {
       if (novaSenha.length < 8) {
@@ -362,6 +365,22 @@ const TelaMenu: React.FC = () => {
                 <label>Email</label>
                 <input type="email" value={userData?.email || ''} onChange={(e) => setUserData(prev => prev ? { ...prev, email: e.target.value } : null)} />
               </div>
+              
+              <div className="field-group">
+                <label>Telefone</label>
+                <InputMask
+                  mask="(99) 99999-9999"
+                  value={userData?.telefone || ''}
+                  onChange={(e) =>
+                    setUserData((prev) =>
+                      prev ? { ...prev, telefone: e.target.value } : null
+                    )
+                  }
+                >
+                  {(inputProps) => <input {...inputProps} type="tel" placeholder="(99) 99999-9999" />}
+                </InputMask>
+              </div>
+
               <div className="field-group">
                 <label>Senha</label>
                 <input

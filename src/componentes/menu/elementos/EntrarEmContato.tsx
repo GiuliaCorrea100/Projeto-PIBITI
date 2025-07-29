@@ -9,6 +9,7 @@ interface Contato {
   id: number;
   nome: string;
   email: string;
+  telefone?: string;
   cargo?: string;
   instituicao?: {
     nome: string;
@@ -106,6 +107,11 @@ const EntrarEmContato: React.FC<EntrarEmContatoProps> = ({ usuarioLogadoId }) =>
                         >
                         {contato.email}
                     </Typography>
+                    {contato.telefone && (
+                    <Typography>
+                      📞 {contato.telefone}
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </Paper>
