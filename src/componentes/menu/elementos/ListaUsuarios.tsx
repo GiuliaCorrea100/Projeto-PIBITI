@@ -16,7 +16,7 @@ import {
     TextField 
 } from "@mui/material";
 
-import { getUsuarios, Usuario } from '../../../api/usuarioService.ts';
+import { getUsuariosPermutaveis, Usuario } from '../../../api/usuarioService.ts'; 
 import defaultAvatarImg from '../img/defaultAvatar.jpg';
 
 interface ListaUsuariosProps {
@@ -138,7 +138,7 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
     const carregarUsuarios = async () => {
       try {
         setLoading(true);
-        const dados = await getUsuarios();
+        const dados = await getUsuariosPermutaveis(usuarioLogadoId); 
         const usuariosComFoto = dados.map(usuario => ({
           ...usuario,
           fotoUrl: usuario.fotoUrl || DEFAULT_AVATAR
@@ -159,7 +159,7 @@ export default function ListaUsuarios({ usuarioLogadoId }: ListaUsuariosProps) {
     };
 
     carregarUsuarios();
-  }, [navigate]);
+  }, [navigate, usuarioLogadoId]);
 
   const columns = getColumns(usuarioLogadoId, handleSolicitarClick);
 

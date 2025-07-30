@@ -43,3 +43,25 @@ export const getUsuarios = async (): Promise<Usuario[]> => {
     throw error;
   }
 };
+
+export const getUsuariosPermutaveis = async (usuarioId: number): Promise<Usuario[]> => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Usuário não autenticado');
+    }
+
+    const response = await axios.get(`http://localhost:3000/permutacoes/${usuarioId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar usuários permutáveis:', error);
+    throw error;
+  }
+};
