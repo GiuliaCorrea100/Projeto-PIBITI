@@ -2,12 +2,10 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios, { AxiosError } from "axios";
 
-// Interface da resposta esperada do backend
 interface ErrorResponse {
     message: string;
 }
 
-// Definição da interface para o estado 'formData'
 interface FormData {
     nome: string;
     email: string;
@@ -15,7 +13,6 @@ interface FormData {
     confirmarSenha: string;
 }
 
-// Definição da interface para o estado 'errors'
 interface FormErrors {
     nome: string;
     email: string;
@@ -182,6 +179,13 @@ function LoginCadastro() {
         });
     };
 
+    // Permitir pressionar Enter para submeter
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === "Enter") {
+            handleSubmit();
+        }
+    };
+
     return (
         <div className="center-container">
             <div className="form-container">
@@ -195,6 +199,7 @@ function LoginCadastro() {
                             name="nome"
                             value={formData.nome}
                             onChange={handleChange}
+                            onKeyDown={handleKeyDown}
                             className={errors.nome ? "input-erro" : ""}
                         />
                         {errors.nome && <p className="erro">{errors.nome}</p>}
@@ -208,6 +213,7 @@ function LoginCadastro() {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
+                        onKeyDown={handleKeyDown}
                         className={errors.email ? "input-erro" : ""}
                         autoComplete="email"
                     />
@@ -221,6 +227,7 @@ function LoginCadastro() {
                         name="senha"
                         value={formData.senha}
                         onChange={handleChange}
+                        onKeyDown={handleKeyDown}
                         className={errors.senha ? "input-erro" : ""}
                         autoComplete={isLogin ? "current-password" : "new-password"}
                     />
@@ -235,6 +242,7 @@ function LoginCadastro() {
                             name="confirmarSenha"
                             value={formData.confirmarSenha}
                             onChange={handleChange}
+                            onKeyDown={handleKeyDown}
                             className={errors.confirmarSenha ? "input-erro" : ""}
                             autoComplete="new-password"
                         />
