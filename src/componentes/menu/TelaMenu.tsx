@@ -301,8 +301,14 @@ const TelaMenu: React.FC = () => {
             />
             <span>{loading ? 'Carregando...' : userName}</span>
           </button>
-        </div>
-        <div className='right-header'>
+                </div>
+                <div className='right-header'>
+                  <button
+          className="user-button"
+          onClick={() => navigate("/forum")}
+        >
+          FÓRUM
+        </button>
           <button
             className="user-button"
             onClick={() => {
