@@ -1,10 +1,24 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  Button, TextField, Dialog, DialogActions, 
-  DialogContent, DialogTitle, Card, CardContent, 
-  Typography, IconButton, CircularProgress, Box, Divider 
+import {
+  Button,
+  TextField,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Card,
+  CardContent,
+  Typography,
+  IconButton,
+  CircularProgress,
+  Box,
+  Divider,
+  Chip,
+  MenuItem,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
@@ -32,8 +46,19 @@ interface Topico {
   createdAt: string;
   usuario: Usuario;
   anonimo: boolean;
-  _count: { comentarios: number };
+  _count: {
+    comentarios: number;
+  };
 }
+
+const categorias = [
+  'Remoção',
+  'Dúvidas',
+  'Transferência',
+  'Experiências',
+  'Documentação',
+  'Off-topic'
+];
 
 const Forum: React.FC = () => {
   const navigate = useNavigate();
@@ -44,11 +69,16 @@ const Forum: React.FC = () => {
   const [openModal, setOpenModal] = useState(false);
   const [topicoSelecionado, setTopicoSelecionado] = useState<Topico | null>(null);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
-  
-  const [novoTopico, setNovoTopico] = useState({ nome: '', categoria: '', descricao: '' });
+  const [novoTopico, setNovoTopico] = useState({
+    nome: '',
+    categoria: '',
+    descricao: ''
+  });
   const [novoComentario, setNovoComentario] = useState('');
   const [usuarioLogadoId, setUsuarioLogadoId] = useState<number | null>(null);
-  const [anonimo, setAnonimo] = useState(false);
+  const [anonimoTopico, setAnonimoTopico] = useState(false);
+  const [anonimoComentario, setAnonimoComentario] = useState(false);
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
 
   const fetchMe = useCallback(async () => {
     try {
@@ -56,35 +86,28 @@ const Forum: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsuarioLogadoId(res.data.id);
-    } catch (err) {
-      console.error("Sessão expirada ou inválida");
+    } catch {
       navigate('/');
     }
-  }, [token, navigate]);
+  }, [navigate, token]);
 
   const fetchTopicos = useCallback(async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const res = await axios.get('http://localhost:3000/foruns', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTopicos(res.data);
-    } catch (err) {
-      console.error("Erro ao buscar tópicos", err);
     } finally {
       setLoading(false);
     }
   }, [token]);
 
   const fetchComentarios = async (id: number) => {
-    try {
-      const res = await axios.get(`http://localhost:3000/foruns/comentarios/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setComentarios(res.data);
-    } catch (err) {
-      console.error("Erro ao buscar comentários", err);
-    }
+    const res = await axios.get(`http://localhost:3000/foruns/comentarios/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setComentarios(res.data);
   };
 
   useEffect(() => {
@@ -93,198 +116,281 @@ const Forum: React.FC = () => {
   }, [fetchMe, fetchTopicos]);
 
   const handleCreateTopico = async () => {
-    if (!usuarioLogadoId || !novoTopico.nome || !novoTopico.descricao) return;
-    try {
-      await axios.post('http://localhost:3000/foruns', {
+    if (!usuarioLogadoId) return;
+    if (!novoTopico.nome || !novoTopico.categoria || !novoTopico.descricao) return;
+
+    await axios.post(
+      'http://localhost:3000/foruns',
+      {
         nome: novoTopico.nome,
         categoria: novoTopico.categoria,
         descricao: novoTopico.descricao,
         id_usuario: usuarioLogadoId,
-        anonimo: anonimo
-      }, { headers: { Authorization: `Bearer ${token}` } });
-      
-      setOpenModal(false);
-      setNovoTopico({ nome: '', categoria: '', descricao: '' });
-      setAnonimo(false);
-      fetchTopicos(); 
-    } catch (err) {
-      alert("Erro ao criar tópico");
-    }
+        anonimo: anonimoTopico
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    setNovoTopico({
+      nome: '',
+      categoria: '',
+      descricao: ''
+    });
+    setAnonimoTopico(false);
+    setOpenModal(false);
+    fetchTopicos();
   };
 
   const handleSendComentario = async () => {
-    if (!topicoSelecionado || !novoComentario || !usuarioLogadoId) return;
-    try {
-      await axios.post('http://localhost:3000/foruns/comentario', {
+    if (!usuarioLogadoId || !topicoSelecionado || !novoComentario) return;
+
+    await axios.post(
+      'http://localhost:3000/foruns/comentario',
+      {
         id_topico: topicoSelecionado.id,
         id_usuario: usuarioLogadoId,
         descricao: novoComentario,
-        anonimo: anonimo
-      }, { headers: { Authorization: `Bearer ${token}` } });
-      
-      setNovoComentario('');
-      setAnonimo(false);
-      fetchComentarios(topicoSelecionado.id); 
-      fetchTopicos(); 
-    } catch (err) {
-      alert("Erro ao enviar comentário");
-    }
+        anonimo: anonimoComentario
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    setNovoComentario('');
+    setAnonimoComentario(false);
+    fetchComentarios(topicoSelecionado.id);
+    fetchTopicos();
   };
+
+  const topicosFiltrados = categoriaSelecionada
+    ? topicos.filter((item) => item.categoria === categoriaSelecionada)
+    : topicos;
+
+  const totalPorCategoria = (categoria: string) =>
+    topicos.filter((item) => item.categoria === categoria).length;
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
         <CircularProgress />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: 900, margin: '0 auto' }}>
-      
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+    <Box sx={{ p: 3, maxWidth: 950, margin: '0 auto' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton onClick={() => topicoSelecionado ? setTopicoSelecionado(null) : navigate('/TelaPrincipal')}>
+          <IconButton
+            onClick={() =>
+              topicoSelecionado
+                ? setTopicoSelecionado(null)
+                : navigate('/TelaPrincipal')
+            }
+          >
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+
+          <Typography variant="h4" fontWeight="bold">
             {topicoSelecionado ? 'Discussão' : 'Fórum'}
           </Typography>
         </Box>
-        
+
         {!topicoSelecionado && (
-          <Button variant="contained" size="large" onClick={() => setOpenModal(true)} sx={{ borderRadius: 2 }}>
+          <Button variant="contained" onClick={() => setOpenModal(true)}>
             Novo Tópico
           </Button>
         )}
       </Box>
 
       {!topicoSelecionado ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {topicos.map((topico) => (
-            <Card 
-              key={topico.id} 
-              onClick={() => {
-                setTopicoSelecionado(topico);
-                fetchComentarios(topico.id);
-              }}
-              sx={{ 
-                cursor: 'pointer', 
-                transition: '0.2s',
-                '&:hover': { backgroundColor: '#f9f9f9', transform: 'translateY(-2px)', boxShadow: 2 } 
-              }}
-            >
-              <CardContent>
-                <Typography color="textSecondary" variant="caption" sx={{ display: 'block', mb: 1 }}>
-                  {topico.categoria.toUpperCase()} • Postado por {topico.anonimo ? 'Anônimo' : topico.usuario.nome}
-                </Typography>
-                <Typography variant="h6" sx={{ color: '#1976d2', mb: 1 }}>{topico.nome}</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-                  <ChatBubbleOutlineIcon sx={{ fontSize: 18, mr: 0.5 }} />
-                  <Typography variant="body2">{topico._count.comentarios} comentários</Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          ))}
-          {topicos.length === 0 && <Typography align="center">Nenhum tópico criado ainda.</Typography>}
-        </Box>
+        <>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 4 }}>
+            {categorias.map((cat) => (
+              <Chip
+                key={cat}
+                label={`${cat} (${totalPorCategoria(cat)})`}
+                clickable
+                color={categoriaSelecionada === cat ? 'primary' : 'default'}
+                onClick={() => setCategoriaSelecionada(cat)}
+              />
+            ))}
+
+            <Chip
+              label="Todas"
+              clickable
+              color={!categoriaSelecionada ? 'primary' : 'default'}
+              onClick={() => setCategoriaSelecionada('')}
+            />
+          </Box>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {topicosFiltrados.map((topico) => (
+              <Card
+                key={topico.id}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': { boxShadow: 4 }
+                }}
+                onClick={() => {
+                  setTopicoSelecionado(topico);
+                  fetchComentarios(topico.id);
+                }}
+              >
+                <CardContent>
+                  <Typography variant="caption" color="text.secondary">
+                    {topico.categoria} • {topico.anonimo ? 'Anônimo' : topico.usuario.nome}
+                  </Typography>
+
+                  <Typography variant="h6" sx={{ mt: 1, mb: 1 }}>
+                    {topico.nome}
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ChatBubbleOutlineIcon fontSize="small" />
+                    <Typography variant="body2">
+                      {topico._count.comentarios} comentários
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+
+            {topicosFiltrados.length === 0 && (
+              <Typography align="center">
+                Nenhum tópico encontrado.
+              </Typography>
+            )}
+          </Box>
+        </>
       ) : (
-        <Box>
-          <Card sx={{ mb: 3, backgroundColor: '#f0f4f8', borderLeft: '5px solid #1976d2' }}>
+        <>
+          <Card sx={{ mb: 3 }}>
             <CardContent>
-              <Typography variant="h5" gutterBottom>{topicoSelecionado.nome}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Iniciado por <strong>{topicoSelecionado.anonimo ? 'Anônimo' : topicoSelecionado.usuario.nome}</strong> em {new Date(topicoSelecionado.createdAt).toLocaleDateString()}
+              <Typography variant="h5">{topicoSelecionado.nome}</Typography>
+
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {topicoSelecionado.categoria}
               </Typography>
             </CardContent>
           </Card>
 
-          <Typography variant="h6" sx={{ mb: 2 }}>Respostas</Typography>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Respostas
+          </Typography>
+
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
             {comentarios.map((c) => (
-              <Box key={c.id} sx={{ p: 2, bgcolor: '#fff', borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <Box key={c.id} sx={{ p: 2, borderRadius: 2, boxShadow: 1 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="subtitle2" color="primary">
-                    {c.anonimo ? 'Anônimo' : `${c.usuario.nome} — ${c.usuario.cargo}`}
+                    {c.anonimo ? 'Anônimo' : `${c.usuario.nome} - ${c.usuario.cargo}`}
                   </Typography>
-                  <Typography variant="caption" color="textSecondary">
+
+                  <Typography variant="caption">
                     {new Date(c.createdAt).toLocaleString('pt-BR')}
                   </Typography>
                 </Box>
-                <Typography variant="body1">{c.descricao}</Typography>
+
+                <Typography>{c.descricao}</Typography>
               </Box>
             ))}
           </Box>
 
           <Divider sx={{ mb: 3 }} />
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-              <TextField 
-                fullWidth 
-                multiline
-                rows={2}
-                placeholder="Escreva uma resposta..." 
-                value={novoComentario}
-                onChange={(e) => setNovoComentario(e.target.value)}
-              />
-              <Button 
-                variant="contained" 
-                sx={{ height: 56 }} 
-                onClick={handleSendComentario}
-                disabled={!novoComentario.trim()}
-              >
-                <SendIcon />
-              </Button>
-            </Box>
-            <Box>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
-                <input
-                  type="checkbox"
-                  checked={anonimo}
-                  onChange={(e) => setAnonimo(e.target.checked)}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="Escreva uma resposta..."
+              value={novoComentario}
+              onChange={(e) => setNovoComentario(e.target.value)}
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={anonimoComentario}
+                  onChange={(e) => setAnonimoComentario(e.target.checked)}
                 />
-                Postar como anônimo
-              </label>
-            </Box>
+              }
+              label="Responder como anônimo"
+            />
+
+            <Button variant="contained" onClick={handleSendComentario}>
+              <SendIcon />
+            </Button>
           </Box>
-        </Box>
+        </>
       )}
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Criar Novo Tópico</DialogTitle>
+        <DialogTitle>Criar Novo Tópico</DialogTitle>
+
         <DialogContent dividers>
-          <TextField 
-            autoFocus margin="dense" label="Título do Tópico" fullWidth variant="outlined"
+          <TextField
+            fullWidth
+            label="Título"
             sx={{ mb: 2 }}
             value={novoTopico.nome}
-            onChange={(e) => setNovoTopico({...novoTopico, nome: e.target.value})}
+            onChange={(e) =>
+              setNovoTopico({ ...novoTopico, nome: e.target.value })
+            }
           />
-          <TextField 
-            margin="dense" label="Categoria (Ex: Remoção, Dúvidas)" fullWidth variant="outlined"
+
+          <TextField
+            select
+            fullWidth
+            label="Categoria"
             sx={{ mb: 2 }}
             value={novoTopico.categoria}
-            onChange={(e) => setNovoTopico({...novoTopico, categoria: e.target.value})}
-          />
-          <TextField 
-            margin="dense" label="Conteúdo/Pergunta Inicial" fullWidth multiline rows={4} variant="outlined"
+            onChange={(e) =>
+              setNovoTopico({ ...novoTopico, categoria: e.target.value })
+            }
+          >
+            {categorias.map((cat) => (
+              <MenuItem key={cat} value={cat}>
+                {cat}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label="Conteúdo"
+            sx={{ mb: 2 }}
             value={novoTopico.descricao}
-            onChange={(e) => setNovoTopico({...novoTopico, descricao: e.target.value})}
+            onChange={(e) =>
+              setNovoTopico({ ...novoTopico, descricao: e.target.value })
+            }
           />
-          <Box sx={{ mt: 2 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={anonimo}
-                onChange={(e) => setAnonimo(e.target.checked)}
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={anonimoTopico}
+                onChange={(e) => setAnonimoTopico(e.target.checked)}
               />
-              Postar como anônimo
-            </label>
-          </Box>
+            }
+            label="Publicar como anônimo"
+          />
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => { setOpenModal(false); setAnonimo(false); }} color="inherit">Cancelar</Button>
-          <Button onClick={handleCreateTopico} variant="contained">Publicar Tópico</Button>
+
+        <DialogActions>
+          <Button onClick={() => setOpenModal(false)}>
+            Cancelar
+          </Button>
+
+          <Button variant="contained" onClick={handleCreateTopico}>
+            Publicar
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
