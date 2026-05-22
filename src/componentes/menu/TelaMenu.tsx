@@ -22,7 +22,7 @@ interface UserData {
   id: number;
   nome: string;
   email: string;
-  telefone?: string; // CAMPO ADICIONADO
+  telefone?: string;
   senha?: string;
   cargo?: string;
   instituicaoId?: number;

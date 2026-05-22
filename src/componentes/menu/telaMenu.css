@@ -1,16 +1,23 @@
-/* --- Variáveis Globais (Sugestão) --- */
 :root {
-  --primary-color: #111827; /* Cor principal escura */
+  --primary-color: #111827;
   --spacing-sm: 8px;
   --spacing-lg: 16px;
 }
 
-/* --- Layout Principal --- */
+body.dark-mode {
+  background-color: #121212;
+  color: #ffffff;
+}
+
 .menu-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
+}
+
+body.dark-mode .menu-container {
+  background-color: #121212;
 }
 
 main {
@@ -20,7 +27,6 @@ main {
   padding: 20px;
 }
 
-/* --- Cabeçalho --- */
 .menu-header {
   background-color: var(--primary-color);
   color: white;
@@ -28,6 +34,11 @@ main {
   display: flex;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .menu-header {
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #333;
 }
 
 .left-header {
@@ -40,7 +51,6 @@ main {
   margin-left: auto;
 }
 
-/* --- Botões principais (escopo restrito) --- */
 .user-button,
 .info-button,
 .cancel-button,
@@ -58,7 +68,6 @@ main {
   font-weight: 500;
 }
 
-/* Especificidades para cada botão */
 .user-button,
 .info-button {
   background: none;
@@ -71,15 +80,29 @@ main {
   background-color: rgba(255, 255, 255, 0.15);
 }
 
+body.dark-mode .user-button,
+body.dark-mode .info-button {
+  color: #ffffff;
+}
+
 .cancel-button {
   background-color: #f3f4f6;
   color: black;
   margin-right: 8px;
 }
 
+body.dark-mode .cancel-button {
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
 .save-button {
   background-color: var(--primary-color);
   color: white;
+}
+
+body.dark-mode .save-button {
+  background-color: #333;
 }
 
 .right-buttons {
@@ -95,7 +118,6 @@ main {
   background-color: #e5e7eb;
 }
 
-/* --- Modals e Alertas --- */
 .profile-modal-overlay,
 .custom-alert-overlay {
   position: fixed;
@@ -115,6 +137,11 @@ main {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
+body.dark-mode .profile-modal-card {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
 .profile-header {
   display: flex;
   align-items: center;
@@ -132,6 +159,10 @@ main {
   color: #666;
 }
 
+body.dark-mode .profile-details p {
+  color: #aaa;
+}
+
 .profile-fields {
   display: flex;
   flex-direction: column;
@@ -145,6 +176,10 @@ main {
   display: block;
 }
 
+body.dark-mode .field-group label {
+  color: #ccc;
+}
+
 .field-group input {
   width: 100%;
   padding: 8px 10px;
@@ -154,6 +189,12 @@ main {
   background-color: #f9f9f9;
 }
 
+body.dark-mode .field-group input {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  border: 1px solid #444;
+}
+
 .profile-actions {
   margin-top: 24px;
   display: flex;
@@ -161,7 +202,6 @@ main {
   align-items: center;
 }
 
-/* --- Avatar Editável --- */
 .profile-avatar-wrapper {
   position: relative;
   width: 64px;
@@ -203,7 +243,6 @@ main {
   z-index: 2;
 }
 
-/* --- Alertas Personalizados --- */
 .custom-alert-box {
   background: white;
   padding: 24px 32px;
@@ -212,10 +251,19 @@ main {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
 }
 
+body.dark-mode .custom-alert-box {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
 .custom-alert-box p {
   margin-bottom: 16px;
   font-size: 16px;
   color: var(--primary-color);
+}
+
+body.dark-mode .custom-alert-box p {
+  color: #ffffff;
 }
 
 .custom-alert-box button {
@@ -227,7 +275,6 @@ main {
   cursor: pointer;
 }
 
-/* --- Checkbox --- */
 .checkbox-group {
   display: flex;
   align-items: center;
@@ -242,6 +289,10 @@ main {
   cursor: pointer;
 }
 
+body.dark-mode .checkbox-label {
+  color: #ccc;
+}
+
 .checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -253,7 +304,6 @@ main {
   user-select: none;
 }
 
-/* --- Autocomplete específico --- */
 .autocomplete-field .MuiInputBase-root {
   border-radius: 6px;
   background-color: #f9f9f9;
@@ -261,8 +311,16 @@ main {
   padding: 0;
 }
 
+body.dark-mode .autocomplete-field .MuiInputBase-root {
+  background-color: #2a2a2a;
+}
+
 .autocomplete-field .MuiOutlinedInput-notchedOutline {
   border-color: #ddd;
+}
+
+body.dark-mode .autocomplete-field .MuiOutlinedInput-notchedOutline {
+  border-color: #444;
 }
 
 .autocomplete-field .MuiAutocomplete-inputRoot {
@@ -274,10 +332,9 @@ main {
 }
 
 .autocomplete-field button {
-  all: unset; /* Impede que seus estilos de botão afetem o dropdown interno */
+  all: unset;
   cursor: pointer;
 }
-
 
 .notificacoes-container {
   padding: 20px;
@@ -294,6 +351,10 @@ main {
   padding: 10px;
   margin-bottom: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .notificacao-card {
+  background-color: #1e1e1e;
 }
 
 .avatar-notificacao {
@@ -316,6 +377,10 @@ main {
 .info-notificacao small {
   font-size: 12px;
   color: #777;
+}
+
+body.dark-mode .info-notificacao small {
+  color: #aaa;
 }
 
 .botoes-notificacao {

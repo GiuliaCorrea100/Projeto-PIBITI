@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios, { AxiosError } from "axios";
+import { 
+  Box, Card, CardContent, TextField, Button, Typography, InputAdornment, IconButton 
+} from '@mui/material';
+import { Person, Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 
 interface ErrorResponse {
     message: string;
@@ -25,6 +29,7 @@ function LoginCadastro() {
     const navigate = useNavigate();
 
     const [isLogin, setIsLogin] = useState<boolean>(true);
+    const [showPassword, setShowPassword] = useState<boolean>(false);
     const [formData, setFormData] = useState<FormData>({
         nome: "",
         email: "",
@@ -105,8 +110,6 @@ function LoginCadastro() {
                     localStorage.setItem('token', response.data.access_token);
                 }
 
-                console.log("Login realizado:", response.data);
-
                 navigate("/TelaPrincipal", {
                     state: {
                         userName: response.data.nome,
@@ -116,14 +119,12 @@ function LoginCadastro() {
                     },
                 });
             } else {
-                const response = await axios.post("http://localhost:3000/autorizacoes/register", {
+                await axios.post("http://localhost:3000/autorizacoes/register", {
                     nome: formData.nome,
                     email: formData.email,
                     senha: formData.senha,
                     cargo: "usuario",
                 });
-
-                console.log("Cadastro realizado:", response.data);
 
                 setIsLogin(true);
                 setFormData({
@@ -148,13 +149,13 @@ function LoginCadastro() {
                 } else {
                     setErrors((prevErrors) => ({
                         ...prevErrors,
-                        geral: axiosError.message || "Erro de conexão com o servidor. Tente novamente mais tarde.",
+                        geral: axiosError.message || "Erro de conexão.",
                     }));
                 }
             } else {
                 setErrors((prevErrors) => ({
                     ...prevErrors,
-                    geral: "Ocorreu um erro inesperado. Tente novamente mais tarde.",
+                    geral: "Ocorreu um erro inesperado.",
                 }));
             }
         } finally {
@@ -164,22 +165,10 @@ function LoginCadastro() {
 
     const handleToggleAuthMode = () => {
         setIsLogin((prevIsLogin) => !prevIsLogin);
-        setFormData({
-            nome: "",
-            email: "",
-            senha: "",
-            confirmarSenha: "",
-        });
-        setErrors({
-            nome: "",
-            email: "",
-            senha: "",
-            confirmarSenha: "",
-            geral: "",
-        });
+        setFormData({ nome: "", email: "", senha: "", confirmarSenha: "" });
+        setErrors({ nome: "", email: "", senha: "", confirmarSenha: "", geral: "" });
     };
 
-    // Permitir pressionar Enter para submeter
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Enter") {
             handleSubmit();
@@ -187,89 +176,99 @@ function LoginCadastro() {
     };
 
     return (
-        <div className="center-container">
-            <div className="form-container">
-                <h2>{isLogin ? "Entrar" : "Cadastre-se"}</h2>
+        <Box sx={{ 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            minHeight: '100vh', bgcolor: '#f5f7fa' 
+        }}>
+            <Card sx={{ maxWidth: 400, width: '100%', borderRadius: 3, boxShadow: 3 }}>
+                <CardContent sx={{ p: 4 }}>
+                    <Typography variant="h5" align="center" fontWeight="bold" gutterBottom>
+                        {isLogin ? "ENTRAR" : "CADASTRE-SE"}
+                    </Typography>
+                    
+                    <Typography variant="body2" align="center" color="textSecondary" sx={{ mb: 3 }}>
+                        Sistema de Permuta de Servidores
+                    </Typography>
 
-                {!isLogin && (
-                    <div className="input-wrapper">
-                        <input
-                            type="text"
-                            placeholder="Nome completo"
-                            name="nome"
-                            value={formData.nome}
-                            onChange={handleChange}
+                    {!isLogin && (
+                        <TextField
+                            fullWidth label="Nome Completo" name="nome"
+                            value={formData.nome} onChange={handleChange}
                             onKeyDown={handleKeyDown}
-                            className={errors.nome ? "input-erro" : ""}
+                            margin="normal" variant="outlined"
+                            error={!!errors.nome} helperText={errors.nome}
+                            InputProps={{ 
+                                startAdornment: <InputAdornment position="start"><Person /></InputAdornment> 
+                            }}
                         />
-                        {errors.nome && <p className="erro">{errors.nome}</p>}
-                    </div>
-                )}
+                    )}
 
-                <div className="input-wrapper">
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
+                    <TextField
+                        fullWidth label="E-mail" name="email" type="email"
+                        value={formData.email} onChange={handleChange}
                         onKeyDown={handleKeyDown}
-                        className={errors.email ? "input-erro" : ""}
-                        autoComplete="email"
+                        margin="normal" variant="outlined"
+                        error={!!errors.email} helperText={errors.email}
+                        InputProps={{ 
+                            startAdornment: <InputAdornment position="start"><Email /></InputAdornment> 
+                        }}
                     />
-                    {errors.email && <p className="erro">{errors.email}</p>}
-                </div>
 
-                <div className="input-wrapper">
-                    <input
-                        type="password"
-                        placeholder="Senha"
-                        name="senha"
-                        value={formData.senha}
-                        onChange={handleChange}
+                    <TextField
+                        fullWidth label="Senha" name="senha" 
+                        type={showPassword ? "text" : "password"}
+                        value={formData.senha} onChange={handleChange}
                         onKeyDown={handleKeyDown}
-                        className={errors.senha ? "input-erro" : ""}
-                        autoComplete={isLogin ? "current-password" : "new-password"}
+                        margin="normal" variant="outlined"
+                        error={!!errors.senha} helperText={errors.senha}
+                        InputProps={{ 
+                            startAdornment: <InputAdornment position="start"><Lock /></InputAdornment>,
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            )
+                        }}
                     />
-                    {errors.senha && <p className="erro">{errors.senha}</p>}
-                </div>
 
-                {!isLogin && (
-                    <div className="input-wrapper">
-                        <input
-                            type="password"
-                            placeholder="Confirme sua senha"
-                            name="confirmarSenha"
-                            value={formData.confirmarSenha}
-                            onChange={handleChange}
+                    {!isLogin && (
+                        <TextField
+                            fullWidth label="Confirme sua Senha" name="confirmarSenha" 
+                            type={showPassword ? "text" : "password"}
+                            value={formData.confirmarSenha} onChange={handleChange}
                             onKeyDown={handleKeyDown}
-                            className={errors.confirmarSenha ? "input-erro" : ""}
-                            autoComplete="new-password"
+                            margin="normal" variant="outlined"
+                            error={!!errors.confirmarSenha} helperText={errors.confirmarSenha}
+                            InputProps={{ 
+                                startAdornment: <InputAdornment position="start"><Lock /></InputAdornment> 
+                            }}
                         />
-                        {errors.confirmarSenha && <p className="erro">{errors.confirmarSenha}</p>}
-                    </div>
-                )}
+                    )}
 
-                {errors.geral && <p className="erro-geral">{errors.geral}</p>}
+                    {errors.geral && (
+                        <Typography color="error" variant="caption" sx={{ display: 'block', mt: 1 }}>
+                            {errors.geral}
+                        </Typography>
+                    )}
 
-                <button type="button" onClick={handleSubmit} disabled={isLoading}>
-                    {isLoading ? "Aguarde..." : isLogin ? "Entrar" : "Cadastrar"}
-                </button>
+                    <Button
+                        fullWidth variant="contained" size="large"
+                        onClick={handleSubmit} disabled={isLoading}
+                        sx={{ mt: 3, mb: 2, borderRadius: 2, textTransform: 'none', fontWeight: 'bold' }}
+                    >
+                        {isLoading ? "Carregando..." : isLogin ? "Acessar Sistema" : "Criar Conta"}
+                    </Button>
 
-                {isLogin && (
-                    <button type="button" className="link-like">
-                        Esqueci a senha
-                    </button>
-                )}
-
-                <p>
-                    {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}
-                    <button type="button" onClick={handleToggleAuthMode}>
-                        {isLogin ? "Cadastre-se" : "Faça login"}
-                    </button>
-                </p>
-            </div>
-        </div>
+                    <Box textAlign="center">
+                        <Button onClick={handleToggleAuthMode} sx={{ textTransform: 'none' }}>
+                            {isLogin ? "Não tem uma conta? Cadastre-se" : "Já tem uma conta? Faça login"}
+                        </Button>
+                    </Box>
+                </CardContent>
+            </Card>
+        </Box>
     );
 }
 
