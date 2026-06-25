@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import defaultAvatarImg from '../img/defaultAvatar.jpg';
-import ChatWindow from './ChatWindow.tsx';
+import ChatWindow from './Chat.tsx';
 
 const DEFAULT_AVATAR = defaultAvatarImg;
 

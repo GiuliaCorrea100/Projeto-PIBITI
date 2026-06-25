@@ -9,6 +9,7 @@ import defaultAvatarImg from '../../componentes/menu/img/defaultAvatar.jpg';
 import ListaUsuarios from '../menu/elementos/ListaUsuarios.tsx';
 import ListaSolicitacoes from '../menu/elementos/ListaSolicitacoes.tsx';
 import EntrarEmContato from '../menu/elementos/EntrarEmContato.tsx';
+import Forum from './elementos/Forum.tsx';
 
 const DEFAULT_AVATAR = defaultAvatarImg;
 
@@ -56,8 +57,11 @@ const TelaMenu: React.FC = () => {
   const [instituicaoDestino, setInstituicaoDestino] = useState<(number | null)[]>([null]);
   const [imageChanged, setImageChanged] = useState(false);
   const [novaSenha, setNovaSenha] = useState('');
+  
+  // Estados de controle das telas internas
   const [showContatos, setShowContatos] = useState(false);
   const [showSolicitacoes, setShowSolicitacoes] = useState(false);
+  const [showForum, setShowForum] = useState(false);
 
   const handleInstituicaoDestinoChange = (index: number, newValue: Instituicao | null) => {
     const novas = [...instituicaoDestino];
@@ -301,38 +305,56 @@ const TelaMenu: React.FC = () => {
             />
             <span>{loading ? 'Carregando...' : userName}</span>
           </button>
-                </div>
-                <div className='right-header'>
-                  <button
-          className="user-button"
-          onClick={() => navigate("/forum")}
-        >
-          FÓRUM
-        </button>
+        </div>
+        <div className='right-header'>
+          <button
+            className="user-button"
+            onClick={() => {
+              setShowForum(prev => {
+                const newValue = !prev;
+                if (newValue) {
+                  setShowContatos(false);
+                  setShowSolicitacoes(false);
+                }
+                return newValue;
+              });
+            }}
+          >
+            {showForum ? 'VOLTAR' : 'FÓRUM'}
+          </button>
+          
           <button
             className="user-button"
             onClick={() => {
               setShowSolicitacoes(prev => {
                 const newValue = !prev;
-                if (newValue) setShowContatos(false);
+                if (newValue) {
+                  setShowContatos(false);
+                  setShowForum(false);
+                }
                 return newValue;
               });
             }}
           >
             {showSolicitacoes ? 'VOLTAR' : 'SOLICITAÇÕES'}
           </button>
+          
           <button
             className="user-button"
             onClick={() => {
               setShowContatos(prev => {
                 const newValue = !prev;
-                if (newValue) setShowSolicitacoes(false);
+                if (newValue) {
+                  setShowSolicitacoes(false);
+                  setShowForum(false);
+                }
                 return newValue;
               });
             }}
           >
             {showContatos ? 'VOLTAR' : 'ENTRAR EM CONTATO'}
           </button>
+          
           <button
             className="user-button"
             onClick={openInfoModal}>
@@ -485,7 +507,9 @@ const TelaMenu: React.FC = () => {
       )}
 
       <main>
-        {showSolicitacoes ? (
+        {showForum ? (
+          <Forum usuarioLogadoId={userData?.id || null} />
+        ) : showSolicitacoes ? (
           <ListaSolicitacoes usuarioLogadoId={userData?.id || 0} />
         ) : showContatos ? (
           userData && <EntrarEmContato usuarioLogadoId={userData.id} />

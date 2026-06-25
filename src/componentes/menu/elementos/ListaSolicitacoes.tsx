@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Avatar, Paper, Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
-import axios from 'axios';
 import defaultAvatarImg from '../img/defaultAvatar.jpg';
+import { api } from '../../../services/api.ts';
 
 const DEFAULT_AVATAR = defaultAvatarImg;
 
@@ -30,18 +30,32 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
   const [solicitacaoSelecionada, setSolicitacaoSelecionada] = useState<Solicitacao | null>(null);
   const [fotosUsuarios, setFotosUsuarios] = useState<{ [id: number]: string }>({});
 
-
   useEffect(() => {
+    const urlsCriadas: string[] = [];
+
+    const carregarFotoUsuario = async (usuarioId: number) => {
+      try {
+        const response = await api.get(`/usuarios/${usuarioId}/foto`, { responseType: 'blob' });
+        const blob = response.data;
+        if (blob.size > 0) {
+          const imageUrl = URL.createObjectURL(blob);
+          urlsCriadas.push(imageUrl); // Armazena para limpeza posterior
+          setFotosUsuarios(prev => ({ ...prev, [usuarioId]: imageUrl }));
+        } else {
+          setFotosUsuarios(prev => ({ ...prev, [usuarioId]: DEFAULT_AVATAR }));
+        }
+      } catch (error) {
+        console.warn(`Erro ao carregar imagem do usuário ${usuarioId}`, error);
+        setFotosUsuarios(prev => ({ ...prev, [usuarioId]: DEFAULT_AVATAR }));
+      }
+    };
+
     const fetchSolicitacoes = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:3000/solicitacoes/${usuarioLogadoId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get<Solicitacao[]>(`/solicitacoes/${usuarioLogadoId}`);
         const solicitacoesRecebidas = response.data;
         setSolicitacoes(solicitacoesRecebidas);
 
-        // Buscar fotos dos solicitantes
         solicitacoesRecebidas.forEach(s => {
           carregarFotoUsuario(s.usuarioSolicitante.id);
         });
@@ -54,20 +68,18 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
     };
 
     fetchSolicitacoes();
+
+    return () => {
+      urlsCriadas.forEach(url => URL.revokeObjectURL(url));
+    };
   }, [usuarioLogadoId]);
 
   const handleAceitar = async () => {
     if (!solicitacaoSelecionada) return;
     
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:3000/solicitacoes/${solicitacaoSelecionada.id}`, {
-        status: 'Aceita'
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put(`/solicitacoes/${solicitacaoSelecionada.id}`, { status: 'Aceita' });
 
-      // Atualiza a lista removendo a solicitação aceita
       setSolicitacoes(solicitacoes.filter(s => s.id !== solicitacaoSelecionada.id));
       setOpenDialog(false);
     } catch (err) {
@@ -80,14 +92,8 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
     if (!solicitacaoSelecionada) return;
     
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:3000/solicitacoes/${solicitacaoSelecionada.id}`, {
-        status: 'Rejeitada'
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put(`/solicitacoes/${solicitacaoSelecionada.id}`, { status: 'Rejeitada' });
 
-      // Atualiza a lista removendo a solicitação rejeitada
       setSolicitacoes(solicitacoes.filter(s => s.id !== solicitacaoSelecionada.id));
       setOpenDialog(false);
     } catch (err) {
@@ -96,49 +102,10 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
     }
   };
 
-  const carregarFotoUsuario = async (usuarioId: number) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:3000/usuarios/${usuarioId}/foto`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob'
-      });
-
-      const blob = response.data;
-      if (blob.size > 0) {
-        const imageUrl = URL.createObjectURL(blob);
-        setFotosUsuarios(prev => ({ ...prev, [usuarioId]: imageUrl }));
-      } else {
-        setFotosUsuarios(prev => ({ ...prev, [usuarioId]: DEFAULT_AVATAR }));
-      }
-    } catch (error) {
-      console.warn(`Erro ao carregar imagem do usuário ${usuarioId}`, error);
-      setFotosUsuarios(prev => ({ ...prev, [usuarioId]: DEFAULT_AVATAR }));
-    }
-  };
-
   return (
-    <Box sx={{
-      p: 3,
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center'
-    }}>
-      <Paper elevation={3} sx={{
-        p: 4,
-        width: '90%',
-        maxWidth: '1200px',
-        borderRadius: '12px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
-      }}>
-        <Typography variant="h4" component="h1" sx={{
-          mb: 3,
-          textAlign: 'center',
-          fontWeight: 'bold'
-        }}>
+    <Box sx={{ p: 3, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Paper elevation={3} sx={{ p: 4, width: '90%', maxWidth: '1200px', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Typography variant="h4" component="h1" sx={{ mb: 3, textAlign: 'center', fontWeight: 'bold' }}>
           Solicitações Recebidas
         </Typography>
 
@@ -152,13 +119,7 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
         {!loading && !error && solicitacoes.length > 0 && (
           <Box sx={{ width: '100%' }}>
             {solicitacoes.map((solicitacao) => (
-              <Paper key={solicitacao.id} sx={{
-                p: 2,
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}>
+              <Paper key={solicitacao.id} sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', justifycontent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Avatar
                     src={fotosUsuarios[solicitacao.usuarioSolicitante.id] || DEFAULT_AVATAR}
@@ -167,15 +128,11 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
                   />
                   <Box>
                     <Typography variant="h6">{solicitacao.usuarioSolicitante.nome}</Typography>
-                    <Typography variant="body2">
-                      {solicitacao.usuarioSolicitante.cargo || 'Cargo não informado'}
-                    </Typography>
-                    <Typography variant="body2">
-                      {solicitacao.usuarioSolicitante.instituicao?.nome || 'Instituição não informada'}
-                    </Typography>
+                    <Typography variant="body2">{solicitacao.usuarioSolicitante.cargo || 'Cargo não informado'}</Typography>
+                    <Typography variant="body2">{solicitacao.usuarioSolicitante.instituicao?.nome || 'Instituição não informada'}</Typography>
                   </Box>
                 </Box>
-                <Box>
+                <Box sx={{ ml: 'auto' }}>
                   <Button
                     variant="contained"
                     color="success"
@@ -212,18 +169,8 @@ const ListaSolicitacoes: React.FC<ListaSolicitacoesProps> = ({ usuarioLogadoId }
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => {
-            handleRejeitar();
-            setOpenDialog(false);
-          }}>
-            Rejeitar
-          </Button>
-          <Button onClick={() => {
-            handleAceitar();
-            setOpenDialog(false);
-          }} color="primary" autoFocus>
-            Aceitar
-          </Button>
+          <Button onClick={() => { handleRejeitar(); setOpenDialog(false); }}>Rejeitar</Button>
+          <Button onClick={() => { handleAceitar(); setOpenDialog(false); }} color="primary" autoFocus>Aceitar</Button>
         </DialogActions>
       </Dialog>
     </Box>

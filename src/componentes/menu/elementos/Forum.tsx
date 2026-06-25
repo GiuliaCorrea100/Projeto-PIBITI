@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   Button,
@@ -18,7 +17,8 @@ import {
   Chip,
   MenuItem,
   Checkbox,
-  FormControlLabel
+  FormControlLabel,
+  Paper
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
@@ -60,8 +60,11 @@ const categorias = [
   'Off-topic'
 ];
 
-const Forum: React.FC = () => {
-  const navigate = useNavigate();
+interface ForumProps {
+  usuarioLogadoId: number | null;
+}
+
+const Forum: React.FC<ForumProps> = ({ usuarioLogadoId }) => {
   const token = localStorage.getItem('token');
 
   const [topicos, setTopicos] = useState<Topico[]>([]);
@@ -69,29 +72,14 @@ const Forum: React.FC = () => {
   const [openModal, setOpenModal] = useState(false);
   const [topicoSelecionado, setTopicoSelecionado] = useState<Topico | null>(null);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
-  const [novoTopico, setNovoTopico] = useState({
-    nome: '',
-    categoria: '',
-    descricao: ''
-  });
+  const [novoTopico, setNovoTopico] = useState({ nome: '', categoria: '', descricao: '' });
   const [novoComentario, setNovoComentario] = useState('');
-  const [usuarioLogadoId, setUsuarioLogadoId] = useState<number | null>(null);
   const [anonimoTopico, setAnonimoTopico] = useState(false);
   const [anonimoComentario, setAnonimoComentario] = useState(false);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
 
-  const fetchMe = useCallback(async () => {
-    try {
-      const res = await axios.get('http://localhost:3000/autorizacoes/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsuarioLogadoId(res.data.id);
-    } catch {
-      navigate('/');
-    }
-  }, [navigate, token]);
-
   const fetchTopicos = useCallback(async () => {
+    if (!token) return;
     try {
       setLoading(true);
       const res = await axios.get('http://localhost:3000/foruns', {
@@ -111,9 +99,8 @@ const Forum: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchMe();
     fetchTopicos();
-  }, [fetchMe, fetchTopicos]);
+  }, [fetchTopicos]);
 
   const handleCreateTopico = async () => {
     if (!usuarioLogadoId) return;
@@ -128,16 +115,10 @@ const Forum: React.FC = () => {
         id_usuario: usuarioLogadoId,
         anonimo: anonimoTopico
       },
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    setNovoTopico({
-      nome: '',
-      categoria: '',
-      descricao: ''
-    });
+    setNovoTopico({ nome: '', categoria: '', descricao: '' });
     setAnonimoTopico(false);
     setOpenModal(false);
     fetchTopicos();
@@ -154,9 +135,7 @@ const Forum: React.FC = () => {
         descricao: novoComentario,
         anonimo: anonimoComentario
       },
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
     setNovoComentario('');
@@ -181,216 +160,148 @@ const Forum: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: 950, margin: '0 auto' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton
-            onClick={() =>
-              topicoSelecionado
-                ? setTopicoSelecionado(null)
-                : navigate('/TelaPrincipal')
-            }
-          >
-            <ArrowBackIcon />
-          </IconButton>
+    <Box sx={{ p: 3, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Paper elevation={3} sx={{ p: 4, width: '90%', maxWidth: '1200px', borderRadius: '12px' }}>
+        
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {topicoSelecionado && (
+              <IconButton onClick={() => setTopicoSelecionado(null)}>
+                <ArrowBackIcon />
+              </IconButton>
+            )}
+            <Typography variant="h4" fontWeight="bold">
+              {topicoSelecionado ? 'Discussão' : 'Fórum de Discussões'}
+            </Typography>
+          </Box>
 
-          <Typography variant="h4" fontWeight="bold">
-            {topicoSelecionado ? 'Discussão' : 'Fórum'}
-          </Typography>
+          {!topicoSelecionado && (
+            <Button variant="contained" onClick={() => setOpenModal(true)} sx={{ borderRadius: '20px' }}>
+              Novo Tópico
+            </Button>
+          )}
         </Box>
 
-        {!topicoSelecionado && (
-          <Button variant="contained" onClick={() => setOpenModal(true)}>
-            Novo Tópico
-          </Button>
-        )}
-      </Box>
-
-      {!topicoSelecionado ? (
-        <>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 4 }}>
-            {categorias.map((cat) => (
+        {!topicoSelecionado ? (
+          <>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 4 }}>
+              {categorias.map((cat) => (
+                <Chip
+                  key={cat}
+                  label={`${cat} (${totalPorCategoria(cat)})`}
+                  clickable
+                  color={categoriaSelecionada === cat ? 'primary' : 'default'}
+                  onClick={() => setCategoriaSelecionada(cat)}
+                />
+              ))}
               <Chip
-                key={cat}
-                label={`${cat} (${totalPorCategoria(cat)})`}
+                label="Todas"
                 clickable
-                color={categoriaSelecionada === cat ? 'primary' : 'default'}
-                onClick={() => setCategoriaSelecionada(cat)}
+                color={!categoriaSelecionada ? 'primary' : 'default'}
+                onClick={() => setCategoriaSelecionada('')}
               />
-            ))}
+            </Box>
 
-            <Chip
-              label="Todas"
-              clickable
-              color={!categoriaSelecionada ? 'primary' : 'default'}
-              onClick={() => setCategoriaSelecionada('')}
-            />
-          </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {topicosFiltrados.map((topico) => (
+                <Card
+                  key={topico.id}
+                  sx={{ cursor: 'pointer', '&:hover': { boxShadow: 4 }, borderRadius: '8px' }}
+                  onClick={() => {
+                    setTopicoSelecionado(topico);
+                    fetchComentarios(topico.id);
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="caption" color="text.secondary">
+                      {topico.categoria} • {topico.anonimo ? 'Anônimo' : topico.usuario.nome}
+                    </Typography>
+                    <Typography variant="h6" sx={{ mt: 1, mb: 1 }}>
+                      {topico.nome}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ChatBubbleOutlineIcon fontSize="small" />
+                      <Typography variant="body2">
+                        {topico._count.comentarios} comentários
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {topicosFiltrados.map((topico) => (
-              <Card
-                key={topico.id}
-                sx={{
-                  cursor: 'pointer',
-                  '&:hover': { boxShadow: 4 }
-                }}
-                onClick={() => {
-                  setTopicoSelecionado(topico);
-                  fetchComentarios(topico.id);
-                }}
-              >
-                <CardContent>
-                  <Typography variant="caption" color="text.secondary">
-                    {topico.categoria} • {topico.anonimo ? 'Anônimo' : topico.usuario.nome}
-                  </Typography>
+              {topicosFiltrados.length === 0 && (
+                <Typography align="center">Nenhum tópico encontrado.</Typography>
+              )}
+            </Box>
+          </>
+        ) : (
+          <>
+            <Card sx={{ mb: 3, bgcolor: '#f9f9f9' }}>
+              <CardContent>
+                <Typography variant="h5" fontWeight="bold">{topicoSelecionado.nome}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Categoria: {topicoSelecionado.categoria}
+                </Typography>
+              </CardContent>
+            </Card>
 
-                  <Typography variant="h6" sx={{ mt: 1, mb: 1 }}>
-                    {topico.nome}
-                  </Typography>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>Respostas</Typography>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ChatBubbleOutlineIcon fontSize="small" />
-                    <Typography variant="body2">
-                      {topico._count.comentarios} comentários
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
+              {comentarios.map((c) => (
+                <Box key={c.id} sx={{ p: 2, borderRadius: 2, boxShadow: 1, bgcolor: 'background.paper', border: '1px solid #eee' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="subtitle2" color="primary" fontWeight="bold">
+                      {c.anonimo ? 'Anônimo' : `${c.usuario.nome} - ${c.usuario.cargo}`}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {new Date(c.createdAt).toLocaleString('pt-BR')}
                     </Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            ))}
-
-            {topicosFiltrados.length === 0 && (
-              <Typography align="center">
-                Nenhum tópico encontrado.
-              </Typography>
-            )}
-          </Box>
-        </>
-      ) : (
-        <>
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h5">{topicoSelecionado.nome}</Typography>
-
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                {topicoSelecionado.categoria}
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Respostas
-          </Typography>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
-            {comentarios.map((c) => (
-              <Box key={c.id} sx={{ p: 2, borderRadius: 2, boxShadow: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle2" color="primary">
-                    {c.anonimo ? 'Anônimo' : `${c.usuario.nome} - ${c.usuario.cargo}`}
-                  </Typography>
-
-                  <Typography variant="caption">
-                    {new Date(c.createdAt).toLocaleString('pt-BR')}
-                  </Typography>
+                  <Typography variant="body1">{c.descricao}</Typography>
                 </Box>
+              ))}
+            </Box>
 
-                <Typography>{c.descricao}</Typography>
-              </Box>
-            ))}
-          </Box>
+            <Divider sx={{ mb: 3 }} />
 
-          <Divider sx={{ mb: 3 }} />
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={2}
-              placeholder="Escreva uma resposta..."
-              value={novoComentario}
-              onChange={(e) => setNovoComentario(e.target.value)}
-            />
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={anonimoComentario}
-                  onChange={(e) => setAnonimoComentario(e.target.checked)}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                placeholder="Escreva uma resposta..."
+                value={novoComentario}
+                onChange={(e) => setNovoComentario(e.target.value)}
+              />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <FormControlLabel
+                  control={<Checkbox checked={anonimoComentario} onChange={(e) => setAnonimoComentario(e.target.checked)} />}
+                  label="Responder como anônimo"
                 />
-              }
-              label="Responder como anônimo"
-            />
+                <Button variant="contained" onClick={handleSendComentario} endIcon={<SendIcon />}>
+                  Enviar
+                </Button>
+              </Box>
+            </Box>
+          </>
+        )}
+      </Paper>
 
-            <Button variant="contained" onClick={handleSendComentario}>
-              <SendIcon />
-            </Button>
-          </Box>
-        </>
-      )}
-
+      {/* Modal de Criar Tópico */}
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="sm">
         <DialogTitle>Criar Novo Tópico</DialogTitle>
-
         <DialogContent dividers>
-          <TextField
-            fullWidth
-            label="Título"
-            sx={{ mb: 2 }}
-            value={novoTopico.nome}
-            onChange={(e) =>
-              setNovoTopico({ ...novoTopico, nome: e.target.value })
-            }
-          />
-
-          <TextField
-            select
-            fullWidth
-            label="Categoria"
-            sx={{ mb: 2 }}
-            value={novoTopico.categoria}
-            onChange={(e) =>
-              setNovoTopico({ ...novoTopico, categoria: e.target.value })
-            }
-          >
-            {categorias.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
-              </MenuItem>
-            ))}
+          <TextField fullWidth label="Título" sx={{ mb: 2, mt: 1 }} value={novoTopico.nome} onChange={(e) => setNovoTopico({ ...novoTopico, nome: e.target.value })} />
+          <TextField select fullWidth label="Categoria" sx={{ mb: 2 }} value={novoTopico.categoria} onChange={(e) => setNovoTopico({ ...novoTopico, categoria: e.target.value })}>
+            {categorias.map((cat) => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
           </TextField>
-
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            label="Conteúdo"
-            sx={{ mb: 2 }}
-            value={novoTopico.descricao}
-            onChange={(e) =>
-              setNovoTopico({ ...novoTopico, descricao: e.target.value })
-            }
-          />
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={anonimoTopico}
-                onChange={(e) => setAnonimoTopico(e.target.checked)}
-              />
-            }
-            label="Publicar como anônimo"
-          />
+          <TextField fullWidth multiline rows={4} label="Conteúdo" sx={{ mb: 2 }} value={novoTopico.descricao} onChange={(e) => setNovoTopico({ ...novoTopico, descricao: e.target.value })} />
+          <FormControlLabel control={<Checkbox checked={anonimoTopico} onChange={(e) => setAnonimoTopico(e.target.checked)} />} label="Publicar como anônimo" />
         </DialogContent>
-
         <DialogActions>
-          <Button onClick={() => setOpenModal(false)}>
-            Cancelar
-          </Button>
-
-          <Button variant="contained" onClick={handleCreateTopico}>
-            Publicar
-          </Button>
+          <Button onClick={() => setOpenModal(false)}>Cancelar</Button>
+          <Button variant="contained" onClick={handleCreateTopico}>Publicar</Button>
         </DialogActions>
       </Dialog>
     </Box>

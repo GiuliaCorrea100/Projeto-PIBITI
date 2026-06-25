@@ -13,12 +13,12 @@ interface Mensagem {
   };
 }
 
-interface ChatWindowProps {
+interface ChatProps {
   conversaId: number;
   usuarioLogadoId: number;
 }
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ conversaId, usuarioLogadoId }) => {
+const Chat: React.FC<ChatProps> = ({ conversaId, usuarioLogadoId }) => {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [novoTexto, setNovoTexto] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -171,4 +171,4 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversaId, usuarioLogadoId }) 
   );
 };
 
-export default ChatWindow;
+export default Chat;
